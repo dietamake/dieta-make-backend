@@ -4,7 +4,7 @@ const generatePdf = require('./generatePdf')
 
 function getDietPlan(data) {
   const objetivo = (data.objetivo || '').toLowerCase()
-  const comidasDia = Number(data.comidas_dia || 3)
+  const comidasDia = Number(data.comidas || 3)
 
   let tituloPlan = 'Plan general'
   let comidas = []
