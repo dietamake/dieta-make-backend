@@ -62,41 +62,46 @@ async function generatePdfForLead(formId) {
     .update({ estado_pdf: 'generating' })
     .eq('id', formId)
 
-  const dietPlan = getDietPlan(data)
+  try {
+    const dietPlan = getDietPlan(data)
 
-  const html = buildHtml({
-    ...data,
-    ...dietPlan,
-  })
-
-  const pdfBuffer = await generatePdf(html)
-  const filePath = `dietas/${formId}.pdf`
-
-  const { error: uploadError } = await supabase.storage
-    .from('pdfs')
-    .upload(filePath, pdfBuffer, {
-      contentType: 'application/pdf',
-      upsert: true,
+    const html = buildHtml({
+      ...data,
+      ...dietPlan,
     })
 
-  if (uploadError) {
+    const pdfBuffer = await generatePdf(html)
+    const filePath = `dietas/${formId}.pdf`
+
+    const { error: uploadError } = await supabase.storage
+      .from('pdfs')
+      .upload(filePath, pdfBuffer, {
+        contentType: 'application/pdf',
+        upsert: true,
+      })
+
+    if (uploadError) {
+      throw uploadError
+    }
+
+    await supabase
+      .from('leads_dietas')
+      .update({
+        estado_pdf: 'done',
+        pdf_path: filePath,
+      })
+      .eq('id', formId)
+
+    return filePath
+  } catch (err) {
     await supabase
       .from('leads_dietas')
       .update({ estado_pdf: 'error' })
       .eq('id', formId)
 
-    throw uploadError
+    console.error('ERROR GENERANDO PDF:', err)
+    throw err
   }
-
-  await supabase
-    .from('leads_dietas')
-    .update({
-      estado_pdf: 'done',
-      pdf_path: filePath,
-    })
-    .eq('id', formId)
-
-  return filePath
 }
 
 module.exports = {
