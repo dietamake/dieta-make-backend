@@ -1,6 +1,7 @@
 const supabase = require('./supabase')
 const buildHtml = require('./buildHtml')
 const generatePdf = require('./generatePdf')
+const sendEmail = require('./sendEmail')
 
 function getDietPlan(data) {
   const objetivo = (data.objetivo || '').toLowerCase()
@@ -84,16 +85,36 @@ async function generatePdfForLead(formId) {
       throw uploadError
     }
 
-await supabase
-  .from('leads_dietas')
-  .update({
-    estado_pdf: 'done',
-    pdf_path: filePath,
-    pdf_generado_at: new Date().toISOString(),
-  })
+    const { data: publicUrlData } = supabase.storage
+      .from('pdfs')
+      .getPublicUrl(filePath)
+
+    const pdfUrl = publicUrlData.publicUrl
+
+    await supabase
+      .from('leads_dietas')
+      .update({
+        estado_pdf: 'done',
+        pdf_path: filePath,
+        pdf_url: pdfUrl,
+        pdf_generado_at: new Date().toISOString(),
+      })
       .eq('id', formId)
 
-    return filePath
+    if (data.email) {
+      await sendEmail({
+        to: data.email,
+        nombre: data.nombre,
+        pdfUrl,
+      })
+    } else {
+      console.log(`El lead ${formId} no tiene email, no se envió el PDF`)
+    }
+
+    return {
+      filePath,
+      pdfUrl,
+    }
   } catch (err) {
     await supabase
       .from('leads_dietas')
