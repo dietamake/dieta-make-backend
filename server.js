@@ -11,6 +11,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
 app.use(cors())
 
+// WEBHOOK
 app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   const signature = req.headers['stripe-signature']
 
@@ -56,14 +57,12 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
           plan: data.plan || '',
           precio: Number(data.precio) || 0,
           pagado: true,
-          estado_pdf: 'pendiente',
+          estado_pdf: 'pending'
         })
         .select('id')
         .single()
 
-      if (insertError) {
-        throw insertError
-      }
+      if (insertError) throw insertError
 
       console.log('Lead guardado con id:', insertedLead.id)
 
@@ -77,7 +76,7 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
       await supabase
         .from('leads_dietas')
         .update({
-          pdf_url: publicUrlData?.publicUrl || null,
+          pdf_url: publicUrlData?.publicUrl || null
         })
         .eq('id', insertedLead.id)
 
@@ -91,8 +90,10 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
   res.json({ received: true })
 })
 
+// JSON normal
 app.use(express.json())
 
+// CREAR CHECKOUT
 app.post('/create-checkout-session', async (req, res) => {
   try {
     const data = req.body
@@ -124,8 +125,8 @@ app.post('/create-checkout-session', async (req, res) => {
           quantity: 1,
         },
       ],
-success_url: `${process.env.FRONTEND_URL}`,
-cancel_url: `${process.env.FRONTEND_URL}`,
+      success_url: `${process.env.FRONTEND_URL}`,
+      cancel_url: `${process.env.FRONTEND_URL}`,
       metadata: {
         nombre: data.nombre || '',
         email: data.email || '',
@@ -156,6 +157,7 @@ cancel_url: `${process.env.FRONTEND_URL}`,
   }
 })
 
+// RUTA MANUAL DE PRUEBA
 app.post('/generate-pdf', async (req, res) => {
   const { formId } = req.body
 
