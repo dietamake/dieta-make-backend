@@ -84,12 +84,13 @@ async function generatePdfForLead(formId) {
       throw uploadError
     }
 
-    await supabase
-      .from('leads_dietas')
-      .update({
-        estado_pdf: 'done',
-        pdf_path: filePath,
-      })
+await supabase
+  .from('leads_dietas')
+  .update({
+    estado_pdf: 'done',
+    pdf_path: filePath,
+    pdf_generado_at: new Date().toISOString(),
+  })
       .eq('id', formId)
 
     return filePath
