@@ -5,6 +5,7 @@ const cors = require('cors')
 const Stripe = require('stripe')
 const supabase = require('./supabase')
 const { generatePdfForLead } = require('./pdfService')
+const { sendDietEmail } = require('./emailService')
 
 const app = express()
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
@@ -66,19 +67,27 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
 
       console.log('Lead guardado con id:', insertedLead.id)
 
-      const filePath = await generatePdfForLead(insertedLead.id)
+  const filePath = await generatePdfForLead(insertedLead.id)
 
-      const { data: publicUrlData } = supabase
-        .storage
-        .from('pdfs')
-        .getPublicUrl(filePath)
+const { data: publicUrlData } = supabase
+  .storage
+  .from('pdfs')
+  .getPublicUrl(filePath)
 
-      await supabase
-        .from('leads_dietas')
-        .update({
-          pdf_url: publicUrlData?.publicUrl || null
-        })
-        .eq('id', insertedLead.id)
+await supabase
+  .from('leads_dietas')
+  .update({
+    pdf_url: publicUrlData?.publicUrl || null
+  })
+  .eq('id', insertedLead.id)
+
+// 👇 AQUÍ PEGAS ESTO
+await sendDietEmail({
+  to: data.email,
+  nombre: data.nombre,
+  pdfUrl: publicUrlData?.publicUrl,
+  plan: data.plan,
+})
 
       console.log('PDF generado y subido:', filePath)
       console.log('PDF URL:', publicUrlData?.publicUrl || 'sin url pública')
