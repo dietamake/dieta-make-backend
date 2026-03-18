@@ -11,7 +11,6 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
 app.use(cors())
 
-// 1. webhook
 app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   const signature = req.headers['stripe-signature']
 
@@ -56,9 +55,8 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
           alergias: data.alergias || '',
           plan: data.plan || '',
           precio: Number(data.precio) || 0,
-          stripe_session_id: session.id,
-          estado_pago: 'paid',
-          estado_pdf: 'pending',
+          pagado: true,
+          estado_pdf: 'pendiente',
         })
         .select('id')
         .single()
@@ -71,7 +69,20 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
 
       const filePath = await generatePdfForLead(insertedLead.id)
 
+      const { data: publicUrlData } = supabase
+        .storage
+        .from('pdfs')
+        .getPublicUrl(filePath)
+
+      await supabase
+        .from('leads_dietas')
+        .update({
+          pdf_url: publicUrlData?.publicUrl || null,
+        })
+        .eq('id', insertedLead.id)
+
       console.log('PDF generado y subido:', filePath)
+      console.log('PDF URL:', publicUrlData?.publicUrl || 'sin url pública')
     } catch (err) {
       console.error('Error procesando pedido:', err)
     }
@@ -80,10 +91,8 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
   res.json({ received: true })
 })
 
-// 2. json normal
 app.use(express.json())
 
-// 3. crear pago
 app.post('/create-checkout-session', async (req, res) => {
   try {
     const data = req.body
@@ -147,7 +156,6 @@ app.post('/create-checkout-session', async (req, res) => {
   }
 })
 
-// 4. tu ruta actual
 app.post('/generate-pdf', async (req, res) => {
   const { formId } = req.body
 
@@ -167,6 +175,10 @@ app.post('/generate-pdf', async (req, res) => {
 })
 
 const PORT = process.env.PORT || 3000
+
+app.listen(PORT, () => {
+  console.log(`Servidor corriendo en puerto ${PORT}`)
+})
 
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en puerto ${PORT}`)
