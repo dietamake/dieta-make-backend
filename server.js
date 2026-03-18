@@ -3,6 +3,7 @@ require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const Stripe = require('stripe')
+const supabase = require('./supabase')
 const { generatePdfForLead } = require('./pdfService')
 
 const app = express()
@@ -29,21 +30,50 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object
-    const data = session.metadata
+    const data = session.metadata || {}
 
     console.log('Pago confirmado:', session.id)
     console.log('Metadata:', data)
 
     try {
-      // Esto seguramente habrá que adaptarlo luego a tu pdfService.js
-      // porque quizá espera un formId y no un objeto completo
-      // de momento lo dejamos comentado para que Stripe abra bien
+      const { data: insertedLead, error: insertError } = await supabase
+        .from('leads_dietas')
+        .insert({
+          nombre: data.nombre || '',
+          email: data.email || '',
+          sexo: data.sexo || '',
+          edad: Number(data.edad) || 0,
+          altura: Number(data.altura) || 0,
+          peso: Number(data.peso) || 0,
+          objetivo: data.objetivo || '',
+          actividad: data.actividad || '',
+          preferencias: data.preferencias || '',
+          entrenas: data.entrenas || '',
+          dias_entreno: Number(data.dias_entreno) || 0,
+          tipo_entreno: data.tipo_entreno || '',
+          comidas: Number(data.comidas) || 0,
+          no_gustan: data.no_gustan || '',
+          alergias: data.alergias || '',
+          plan: data.plan || '',
+          precio: Number(data.precio) || 0,
+          stripe_session_id: session.id,
+          estado_pago: 'paid',
+          estado_pdf: 'pending',
+        })
+        .select('id')
+        .single()
 
-      // await generatePdfForLead(data)
+      if (insertError) {
+        throw insertError
+      }
 
-      console.log('Pago procesado correctamente')
+      console.log('Lead guardado con id:', insertedLead.id)
+
+      const filePath = await generatePdfForLead(insertedLead.id)
+
+      console.log('PDF generado y subido:', filePath)
     } catch (err) {
-      console.error('Error generando PDF:', err)
+      console.error('Error procesando pedido:', err)
     }
   }
 
@@ -85,8 +115,8 @@ app.post('/create-checkout-session', async (req, res) => {
           quantity: 1,
         },
       ],
-      success_url: 'http://localhost:3000/gracias',
-      cancel_url: 'http://localhost:3000/cancelado',
+      success_url: `${process.env.FRONTEND_URL}/gracias`,
+      cancel_url: `${process.env.FRONTEND_URL}/cancelado`,
       metadata: {
         nombre: data.nombre || '',
         email: data.email || '',
