@@ -9,26 +9,26 @@ function formatObjetivo(objetivo) {
 }
 
 function getDietPlan(data) {
-  const comidasDia = Math.min(Math.max(Number(data.comidas) || 3, 3), 6)
+  const comidasDia = Math.min(Math.max(Number(data.comidasDia) || 3, 3), 6)
 
   let tituloPlan = 'Plan nutricional personalizado'
-  let comidas = [
+  let comidasPlan = [
     'Desayuno: yogur griego + avena + fruta',
     'Comida: pollo + arroz + verduras',
     'Cena: pescado blanco o huevos + patata cocida + verduras',
   ]
 
   if (comidasDia === 4) {
-    comidas.splice(1, 0, 'Media mañana: fruta + yogur natural')
+    comidasPlan.splice(1, 0, 'Media mañana: fruta + yogur natural')
   }
 
   if (comidasDia === 5) {
-    comidas.splice(1, 0, 'Media mañana: fruta + yogur natural')
-    comidas.splice(3, 0, 'Merienda: tortitas de arroz + pavo')
+    comidasPlan.splice(1, 0, 'Media mañana: fruta + yogur natural')
+    comidasPlan.splice(3, 0, 'Merienda: tortitas de arroz + pavo')
   }
 
   if (comidasDia === 6) {
-    comidas = [
+    comidasPlan = [
       'Desayuno: yogur griego + avena + fruta',
       'Media mañana: fruta + yogur natural',
       'Comida: pollo + arroz + verduras',
@@ -40,7 +40,7 @@ function getDietPlan(data) {
 
   return {
     tituloPlan,
-    comidas,
+    comidasPlan,
   }
 }
 
@@ -48,6 +48,7 @@ function normalizeLeadData(data) {
   return {
     ...data,
     objetivo: formatObjetivo(data.objetivo),
+    comidasDia: Number(data.comidas) || 3,
     comidas: Number(data.comidas) || 3,
     edad: Number(data.edad) || 0,
     altura: Number(data.altura) || 0,
