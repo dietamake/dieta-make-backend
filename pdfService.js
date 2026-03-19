@@ -2,48 +2,57 @@ const supabase = require('./supabase')
 const buildHtml = require('./buildHtml')
 const generatePdf = require('./generatePdf')
 
+function formatObjetivo(objetivo) {
+  if (Array.isArray(objetivo)) return objetivo.join(', ')
+  if (typeof objetivo === 'string') return objetivo
+  return ''
+}
+
 function getDietPlan(data) {
-  const objetivo = (data.objetivo || '').toLowerCase()
-  const comidasDia = Number(data.comidas || 3)
+  const comidasDia = Math.min(Math.max(Number(data.comidas) || 3, 3), 6)
 
-  let tituloPlan = 'Plan general'
-  let comidas = []
-
-  if (objetivo.includes('perder')) {
-    tituloPlan = 'Plan de pérdida de grasa'
-    comidas = [
-      'Desayuno: yogur + avena + fruta',
-      'Comida: pollo + arroz + verduras',
-      'Cena: tortilla + ensalada'
-    ]
-  } else if (objetivo.includes('ganar')) {
-    tituloPlan = 'Plan de ganancia muscular'
-    comidas = [
-      'Desayuno: avena + proteína + plátano',
-      'Comida: ternera + pasta + verduras',
-      'Cena: salmón + patata'
-    ]
-  } else {
-    tituloPlan = 'Plan de mantenimiento'
-    comidas = [
-      'Desayuno: tostadas + huevos',
-      'Comida: arroz + pollo',
-      'Cena: pescado + verduras'
-    ]
-  }
+  let tituloPlan = 'Plan nutricional personalizado'
+  let comidas = [
+    'Desayuno: yogur griego + avena + fruta',
+    'Comida: pollo + arroz + verduras',
+    'Cena: pescado blanco o huevos + patata cocida + verduras',
+  ]
 
   if (comidasDia === 4) {
-    comidas.splice(1, 0, 'Media mañana: fruta + yogur')
+    comidas.splice(1, 0, 'Media mañana: fruta + yogur natural')
   }
 
-  if (comidasDia >= 5) {
-    comidas.splice(1, 0, 'Media mañana: fruta + yogur')
+  if (comidasDia === 5) {
+    comidas.splice(1, 0, 'Media mañana: fruta + yogur natural')
     comidas.splice(3, 0, 'Merienda: tortitas de arroz + pavo')
+  }
+
+  if (comidasDia === 6) {
+    comidas = [
+      'Desayuno: yogur griego + avena + fruta',
+      'Media mañana: fruta + yogur natural',
+      'Comida: pollo + arroz + verduras',
+      'Merienda: tortitas de arroz + pavo',
+      'Cena: pescado blanco o huevos + patata cocida + verduras',
+      'Recena: queso fresco batido o yogur alto en proteína',
+    ]
   }
 
   return {
     tituloPlan,
     comidas,
+  }
+}
+
+function normalizeLeadData(data) {
+  return {
+    ...data,
+    objetivo: formatObjetivo(data.objetivo),
+    comidas: Number(data.comidas) || 3,
+    edad: Number(data.edad) || 0,
+    altura: Number(data.altura) || 0,
+    peso: Number(data.peso) || 0,
+    precio: Number(data.precio) || 0,
   }
 }
 
@@ -63,10 +72,11 @@ async function generatePdfForLead(formId) {
     .eq('id', formId)
 
   try {
-    const dietPlan = getDietPlan(data)
+    const normalizedData = normalizeLeadData(data)
+    const dietPlan = getDietPlan(normalizedData)
 
     const html = buildHtml({
-      ...data,
+      ...normalizedData,
       ...dietPlan,
     })
 
