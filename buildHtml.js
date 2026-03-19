@@ -1,5 +1,5 @@
 function buildHtml(data) {
-  const comidasHtml = (data.comidas || [])
+  const comidasHtml = (data.comidasPlan || [])
     .map((item) => `<li style="margin-bottom:8px;">${item}</li>`)
     .join('')
 
@@ -89,7 +89,7 @@ function buildHtml(data) {
         <p><strong>Primera comida del día:</strong> ${data.primera_comida || ''}</p>
         <p><strong>Frecuencia de baño:</strong> ${data.bano || ''}</p>
         <p><strong>Despertares nocturnos:</strong> ${data.despertares_noche || ''}</p>
-        <p><strong>Comidas al día:</strong> ${data.comidas || ''}</p>
+        <p><strong>Comidas al día:</strong> ${data.comidasDia || ''}</p>
       </div>
     </body>
     </html>
