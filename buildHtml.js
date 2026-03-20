@@ -31,7 +31,7 @@ function buildHtml(data) {
 
         body {
           margin: 0;
-          font-family: Arial, sans-serif;
+          font-family: 'Manrope', Arial, sans-serif;
           background: #f6f1eb;
           color: #2b2b2b;
           -webkit-print-color-adjust: exact;
