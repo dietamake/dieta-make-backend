@@ -54,39 +54,58 @@ function calcularCalorias(data) {
 }
 
 function getDietPlan(data) {
-  const comidasDia = Math.min(Math.max(Number(data.comidasDia) || 3, 3), 6)
+  const plan = (data.plan || '').toLowerCase()
 
   let tituloPlan = 'Plan nutricional personalizado'
-  let comidasPlan = [
-    'Desayuno: yogur griego + avena + fruta',
-    'Comida: pollo + arroz + verduras',
-    'Cena: pescado blanco o huevos + patata cocida + verduras',
-  ]
+  let comidasPlan = []
 
-  if (comidasDia === 4) {
-    comidasPlan.splice(1, 0, 'Media mañana: fruta + yogur natural')
-  }
-
-  if (comidasDia === 5) {
-    comidasPlan.splice(1, 0, 'Media mañana: fruta + yogur natural')
-    comidasPlan.splice(3, 0, 'Merienda: tortitas de arroz + pavo')
-  }
-
-  if (comidasDia === 6) {
+  if (plan.includes('basico_1_opcion')) {
+    tituloPlan = 'Plan básico'
     comidasPlan = [
-      'Desayuno: yogur griego + avena + fruta',
-      'Media mañana: fruta + yogur natural',
+      'Desayuno: yogur + avena + fruta',
       'Comida: pollo + arroz + verduras',
-      'Merienda: tortitas de arroz + pavo',
-      'Cena: pescado blanco o huevos + patata cocida + verduras',
-      'Recena: queso fresco batido o yogur alto en proteína',
+      'Cena: huevos + ensalada'
     ]
   }
 
-  return {
-    tituloPlan,
-    comidasPlan,
+  if (plan.includes('recomendado_5_opciones')) {
+    tituloPlan = 'Plan recomendado'
+    comidasPlan = [
+      'Desayuno: yogur + avena + fruta',
+      'Desayuno: tostadas + huevos',
+      'Desayuno: smoothie + proteína',
+
+      'Comida: pollo + arroz + verduras',
+      'Comida: ternera + patata',
+      'Comida: pasta + atún',
+
+      'Cena: salmón + verduras',
+      'Cena: tortilla + ensalada',
+      'Cena: pollo + verduras'
+    ]
   }
+
+  if (plan.includes('avanzado_7_opciones')) {
+    tituloPlan = 'Plan avanzado'
+    comidasPlan = [
+      'Desayuno: yogur + avena + fruta',
+      'Desayuno: tostadas + aguacate',
+      'Desayuno: smoothie + proteína',
+      'Desayuno: huevos + fruta',
+
+      'Comida: pollo + arroz',
+      'Comida: ternera + patata',
+      'Comida: pasta + atún',
+      'Comida: arroz + salmón',
+
+      'Cena: pescado + verduras',
+      'Cena: tortilla + ensalada',
+      'Cena: pollo + verduras',
+      'Cena: carne + verduras'
+    ]
+  }
+
+  return { tituloPlan, comidasPlan }
 }
 
 function normalizeLeadData(data) {
