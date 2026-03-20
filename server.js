@@ -18,6 +18,28 @@ function normalizeObjetivo(value) {
   return ''
 }
 
+function getPlanConfig(plan) {
+  const plans = {
+    basico_1_opcion: {
+      amount: 900,
+      price: 9,
+      label: 'Plan básico',
+    },
+    recomendado_5_opciones: {
+      amount: 1400,
+      price: 14,
+      label: 'Plan recomendado',
+    },
+    avanzado_7_opciones: {
+      amount: 2400,
+      price: 24,
+      label: 'Plan avanzado',
+    },
+  }
+
+  return plans[plan] || null
+}
+
 // WEBHOOK
 app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   const signature = req.headers['stripe-signature']
@@ -111,20 +133,14 @@ app.post('/create-checkout-session', async (req, res) => {
   try {
     const data = req.body
 
-    const precios = {
-      '1_semana': 300,
-      '1_mes': 1000,
-      '3_meses': 2500,
-    }
-
-    const amount = precios[data.plan]
-
-    if (!amount) {
-      return res.status(400).json({ error: 'Plan inválido' })
-    }
-
     if (!data.email) {
       return res.status(400).json({ error: 'Email obligatorio' })
+    }
+
+    const planConfig = getPlanConfig(data.plan)
+
+    if (!planConfig) {
+      return res.status(400).json({ error: 'Plan inválido' })
     }
 
     const objetivoTexto = normalizeObjetivo(data.objetivo)
@@ -137,15 +153,15 @@ app.post('/create-checkout-session', async (req, res) => {
           price_data: {
             currency: 'eur',
             product_data: {
-              name: `Dieta Make - ${data.plan}`,
+              name: `Dieta Make - ${planConfig.label}`,
             },
-            unit_amount: amount,
+            unit_amount: planConfig.amount,
           },
           quantity: 1,
         },
       ],
-      success_url: `${process.env.FRONTEND_URL}`,
-      cancel_url: `${process.env.FRONTEND_URL}`,
+      success_url: `${process.env.FRONTEND_URL}?pago=ok`,
+      cancel_url: `${process.env.FRONTEND_URL}?pago=cancelado`,
       metadata: {
         nombre: data.nombre || '',
         email: data.email || '',
@@ -162,7 +178,7 @@ app.post('/create-checkout-session', async (req, res) => {
         despertares_noche: data.despertares_noche || '',
         comidas: String(data.comidas || ''),
         plan: data.plan || '',
-        precio: String(data.precio || ''),
+        precio: String(planConfig.price),
       },
     })
 
