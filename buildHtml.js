@@ -58,17 +58,15 @@ function renderChoiceBoxes(line) {
   if (parts.length <= 1) return ''
 
   return `
-    <div class="choice-box-wrap">
-      <div class="choice-box-label">Elige una opción</div>
-      <div class="choice-box-grid">
-        ${parts
-          .map(
-            (part) => `
-              <div class="choice-box-item">${escapeHtml(part)}</div>
-            `
-          )
-          .join('')}
-      </div>
+    <div class="choice-box-label">Elige una opción</div>
+    <div class="choice-box-grid">
+      ${parts
+        .map(
+          (part) => `
+            <div class="choice-box-item">${escapeHtml(part)}</div>
+          `
+        )
+        .join('')}
     </div>
   `
 }
@@ -755,19 +753,27 @@ function buildHtml(data) {
           box-sizing: border-box;
         }
 
-        body {
+        html, body {
           margin: 0;
+          padding: 0;
           font-family: Arial, sans-serif;
           color: #2f241d;
-          background: #f8f2eb;
+          background: #ffffff;
           line-height: 1.28;
           font-size: 9.4px;
           -webkit-print-color-adjust: exact;
           print-color-adjust: exact;
         }
 
+        body {
+          background: #ffffff;
+        }
+
         .page {
           width: 100%;
+          background: #ffffff;
+          border-radius: 18px;
+          padding: 6px;
         }
 
         .cover {
@@ -938,7 +944,7 @@ function buildHtml(data) {
           font-size: 14px;
           font-weight: 800;
           color: #6b4b36;
-          margin-bottom: 8px;
+          margin-bottom: 10px;
           text-align: center;
         }
 
@@ -949,7 +955,7 @@ function buildHtml(data) {
           border: 1px solid #e3cfbe;
           border-radius: 8px;
           padding: 5px 7px;
-          margin-bottom: 5px;
+          margin-bottom: 6px;
           text-align: center;
         }
 
@@ -960,6 +966,13 @@ function buildHtml(data) {
           gap: 8px;
           align-items: start;
           margin-top: 0;
+        }
+
+        .meal-options-grid > .option-card:last-child:nth-child(odd),
+        .options-grid > .option-card:last-child:nth-child(odd) {
+          grid-column: 1 / -1;
+          max-width: calc(50% - 4px);
+          justify-self: center;
         }
 
         .option-card {
@@ -1011,14 +1024,6 @@ function buildHtml(data) {
           margin-bottom: 4px;
         }
 
-        .choice-box-wrap {
-          background: #fcf7f2;
-          border: 1px dashed #dcc2af;
-          border-radius: 10px;
-          padding: 6px;
-          margin: 0 auto 4px;
-        }
-
         .choice-box-label {
           display: inline-block;
           background: #fff8f2;
@@ -1028,7 +1033,7 @@ function buildHtml(data) {
           padding: 2px 8px;
           font-size: 8px;
           font-weight: 700;
-          margin-bottom: 5px;
+          margin: 0 auto 5px;
         }
 
         .choice-box-grid {
