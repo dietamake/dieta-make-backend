@@ -158,20 +158,6 @@ function repartirCaloriasPorComida(caloriasObjetivo, planBase) {
   })
 }
 
-function getBaseCarbGrams(carbSource) {
-  if (carbSource === 'patata') return 370
-  if (carbSource === 'boniato') return 240
-  if (carbSource === 'arroz') return 80
-  return 370
-}
-
-function getMinCarbGrams(carbSource) {
-  if (carbSource === 'patata') return 120
-  if (carbSource === 'boniato') return 100
-  if (carbSource === 'arroz') return 60
-  return 120
-}
-
 function ajustarComida1(deltaKcal) {
   let deltaRestante = deltaKcal
 
@@ -201,7 +187,7 @@ function ajustarComida1(deltaKcal) {
 }
 
 function ajustarComida2(deltaKcal) {
-  // Prioridad: quitar fruta antes que tocar el pan
+  // Quitamos primero fruta antes que tocar el pan
   let deltaRestante = deltaKcal
 
   const frutaUnidades = ajustarFrutaUnidades(
@@ -212,7 +198,7 @@ function ajustarComida2(deltaKcal) {
   )
 
   const kcalFrutaNueva = frutaUnidades * CARB_DB.fruta_unidad.kcal
-  const kcalFrutaBase = 1 * CARB_DB.fruta_unidad.kcal
+  const kcalFrutaBase = 100
   deltaRestante -= (kcalFrutaNueva - kcalFrutaBase)
 
   const panGramos = ajustarGramos(
@@ -230,13 +216,12 @@ function ajustarComida2(deltaKcal) {
 }
 
 function ajustarComida3Normal(deltaKcal) {
-  // Calcula las tres fuentes a la vez para que el PDF enseñe patata o boniato o arroz
   const patataGramos = ajustarGramos(
     370,
     deltaKcal * 0.75,
     CARB_DB.patata_cocida.kcalPerGram,
     10,
-    getMinCarbGrams('patata')
+    120
   )
 
   const boniatoGramos = ajustarGramos(
@@ -244,7 +229,7 @@ function ajustarComida3Normal(deltaKcal) {
     deltaKcal * 0.75,
     CARB_DB.boniato_cocido.kcalPerGram,
     10,
-    getMinCarbGrams('boniato')
+    100
   )
 
   const arrozGramos = ajustarGramos(
@@ -252,7 +237,7 @@ function ajustarComida3Normal(deltaKcal) {
     deltaKcal * 0.75,
     CARB_DB.arroz_blanco_cocido.kcalPerGram,
     10,
-    getMinCarbGrams('arroz')
+    60
   )
 
   const frutaUnidades = ajustarFrutaUnidades(
@@ -318,6 +303,131 @@ function ajustarComida3Avena(deltaKcal, sweetSource = 'fruta') {
   }
 }
 
+function mergeUnique(arr1 = [], arr2 = []) {
+  return [...new Set([...arr1, ...arr2])]
+}
+
+function getAjustesPrimeraComida(primeraComida) {
+  if (primeraComida === 'energia') {
+    return {
+      ultimaComida: [],
+      duranteDia: [],
+    }
+  }
+
+  if (primeraComida === 'relaja') {
+    return {
+      ultimaComida: [],
+      duranteDia: ['menos_proteina', 'mas_calcio'],
+    }
+  }
+
+  return {
+    ultimaComida: [],
+    duranteDia: [],
+  }
+}
+
+function getAjustesBano(bano) {
+  if (bano === 'poco') {
+    return {
+      ultimaComida: [],
+      duranteDia: ['mas_fibra', 'cafe_con_azucar'],
+    }
+  }
+
+  if (bano === 'normal') {
+    return {
+      ultimaComida: [],
+      duranteDia: [],
+    }
+  }
+
+  if (bano === 'mucho') {
+    return {
+      ultimaComida: [],
+      duranteDia: ['mas_fibra'],
+    }
+  }
+
+  return {
+    ultimaComida: [],
+    duranteDia: [],
+  }
+}
+
+function getAjustesDespertares(despertaresNoche) {
+  if (despertaresNoche === '0' || despertaresNoche === '1_poco') {
+    return {
+      ultimaComida: [],
+      duranteDia: [],
+    }
+  }
+
+  if (despertaresNoche === '1_2') {
+    return {
+      ultimaComida: ['mas_dulce_noche'],
+      duranteDia: [],
+    }
+  }
+
+  if (despertaresNoche === '3_mas') {
+    return {
+      ultimaComida: ['mas_dulce_noche', 'mas_hidrato_noche', 'mas_grasa_noche'],
+      duranteDia: [],
+    }
+  }
+
+  return {
+    ultimaComida: [],
+    duranteDia: [],
+  }
+}
+
+function traducirAjustesPersonalizados(data) {
+  const a1 = getAjustesPrimeraComida(data.primera_comida)
+  const a2 = getAjustesBano(data.bano)
+  const a3 = getAjustesDespertares(data.despertares_noche)
+
+  const ultimaComida = mergeUnique(
+    mergeUnique(a1.ultimaComida, a2.ultimaComida),
+    a3.ultimaComida
+  )
+
+  const duranteDia = mergeUnique(
+    mergeUnique(a1.duranteDia, a2.duranteDia),
+    a3.duranteDia
+  )
+
+  const ultimaComidaTexto = ultimaComida.map((code) => {
+    const map = {
+      mas_dulce_noche: 'En la última comida añade un poco más de azúcar fácil de digerir. Ejemplos: un poco más de miel o una fruta más.',
+      mas_hidrato_noche: 'En la última comida mete un poco más de hidratos de digestión lenta. Ejemplos: más patata, más boniato, más arroz cocido o más avena.',
+      mas_grasa_noche: 'En la última comida añade un poco más de grasa. Ejemplos: un poco más de aceite de coco, queso curado, aguacate o nueces de macadamia.',
+    }
+
+    return map[code] || code
+  })
+
+  const duranteDiaTexto = duranteDia.map((code) => {
+    const map = {
+      menos_proteina: 'Durante el día no cargues tanto las comidas de proteína. Mantén la dieta más ligera en ese punto.',
+      mas_calcio: 'Durante el día prioriza alimentos con calcio. Ejemplos: leche, yogur, queso fresco batido o queso.',
+      mas_fibra: 'Durante el día mete más fibra para ir mejor al baño. Ejemplos: más verdura, más fruta entera o un poco más de avena si te sienta bien.',
+      cafe_con_azucar: 'Puedes tomar café con un poco de azúcar junto a las comidas.',
+    }
+
+    return map[code] || code
+  })
+
+  return {
+    ultimaComida,
+    duranteDia,
+    ultimaComidaTexto,
+    duranteDiaTexto,
+  }
+}
+
 function generarPlan3Comidas(caloriasObjetivo) {
   const reparto = repartirCaloriasPorComida(caloriasObjetivo, PLAN_3_BASE)
 
@@ -344,6 +454,7 @@ function getDietPlan(data) {
       reparto: [],
       ajustes: {},
       resumenPlan: 'De momento solo está implementada la dieta de 3 comidas.',
+      ajustesPersonalizados: traducirAjustesPersonalizados(data),
     }
   }
 
@@ -355,6 +466,7 @@ function getDietPlan(data) {
     numeroOpcionesPlan: data.numeroOpcionesPlan,
     resumenPlan:
       'Se respetan los alimentos de cada opción y solo se ajustan las fuentes de hidratos para adaptar la dieta a las calorías calculadas.',
+    ajustesPersonalizados: traducirAjustesPersonalizados(data),
   }
 }
 
@@ -374,6 +486,9 @@ function normalizeLeadData(data) {
     grasa: normalizeGrasa(data.grasa_abdominal),
     plan: data.plan || '',
     numeroOpcionesPlan: getNumeroOpcionesPlan(data.plan),
+    primera_comida: data.primera_comida || '',
+    bano: data.bano || '',
+    despertares_noche: data.despertares_noche || '',
   }
 }
 
