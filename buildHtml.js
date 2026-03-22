@@ -169,52 +169,44 @@ function renderCover(data, numeroOpcionesPlan) {
   const plan = data.plan || 'Plan personalizado'
   const fecha = formatFecha(data.fechaGeneracion)
 
-  const badges = [
-    `Objetivo: ${objetivo || '-'}`,
-    `Comidas: ${data.comidasDia || 3}`,
-    `Opciones por comida: ${numeroOpcionesPlan}`,
-    data.caloriasObjetivo ? `Kcal objetivo: ${data.caloriasObjetivo}` : '',
-  ].filter(Boolean)
+  const metaItems = [
+    ['Cliente', nombre],
+    ['Objetivo', objetivo],
+    ['Plan', plan],
+    ['Fecha', fecha],
+    ['Comidas', String(data.comidasDia || 3)],
+    ['Opciones por comida', String(numeroOpcionesPlan)],
+    ['Kcal objetivo', data.caloriasObjetivo ? `${data.caloriasObjetivo}` : '-'],
+  ]
 
   return `
     <section class="cover">
-      <div class="cover-brand-wrap">
+      <div class="cover-inner">
         <div class="cover-brand">DIETA MAKE</div>
         <div class="cover-brand-line"></div>
-      </div>
 
-      <div class="cover-panel">
-        <div class="cover-kicker">Plan nutricional personalizado</div>
-        <h1 class="cover-title">${escapeHtml(data.tituloPlan || 'Plan nutricional personalizado')}</h1>
+        <h1 class="cover-title">${escapeHtml(data.tituloPlan || 'Plan nutricional')}</h1>
+
         <p class="cover-text">
           Diseñado según el perfil, el objetivo y la estructura de comidas del cliente.
         </p>
 
-        <div class="cover-client">
-          <div class="cover-client-item">
-            <div class="cover-label">Cliente</div>
-            <div class="cover-value">${escapeHtml(nombre)}</div>
-          </div>
-          <div class="cover-client-item">
-            <div class="cover-label">Objetivo</div>
-            <div class="cover-value">${escapeHtml(objetivo)}</div>
-          </div>
-          <div class="cover-client-item">
-            <div class="cover-label">Plan</div>
-            <div class="cover-value">${escapeHtml(plan)}</div>
-          </div>
-          <div class="cover-client-item">
-            <div class="cover-label">Fecha</div>
-            <div class="cover-value">${escapeHtml(fecha)}</div>
-          </div>
+        <div class="cover-meta">
+          ${metaItems
+            .map(
+              ([label, value]) => `
+                <div class="cover-meta-row">
+                  <span class="cover-meta-label">${escapeHtml(label)}</span>
+                  <span class="cover-meta-sep">·</span>
+                  <span class="cover-meta-value">${escapeHtml(value)}</span>
+                </div>
+              `
+            )
+            .join('')}
         </div>
 
-        <div class="cover-badges">
-          ${badges.map((badge) => `<span class="cover-badge">${escapeHtml(badge)}</span>`).join('')}
-        </div>
+        <div class="cover-footer">Guía visual de comidas y opciones</div>
       </div>
-
-      <div class="cover-footer">Guía visual de comidas y opciones</div>
     </section>
   `
 }
@@ -815,115 +807,84 @@ function buildHtml(data) {
         }
 
         .cover {
-          min-height: 245mm;
+          min-height: 273mm;
           display: flex;
-          flex-direction: column;
+          align-items: center;
           justify-content: center;
+          text-align: center;
           page-break-after: always;
-          background: linear-gradient(180deg, #f8f2eb 0%, #efe3d7 100%);
+          background: #efe3d7;
           border: 1px solid #dfc7b5;
           border-radius: 26px;
-          padding: 28mm 18mm;
+          padding: 20mm 16mm;
         }
 
-        .cover-brand-wrap {
-          text-align: center;
-          margin-bottom: 26px;
+        .cover-inner {
+          width: 100%;
+          max-width: 150mm;
+          margin: 0 auto;
         }
 
         .cover-brand {
-          font-size: 34px;
+          font-size: 48px;
           font-weight: 800;
-          letter-spacing: 2px;
+          letter-spacing: 3px;
           color: #7b5a43;
+          margin-bottom: 10px;
         }
 
         .cover-brand-line {
-          width: 120px;
+          width: 140px;
           height: 4px;
           background: #b08968;
           border-radius: 999px;
-          margin: 10px auto 0;
-        }
-
-        .cover-panel {
-          background: rgba(255, 250, 245, 0.88);
-          border: 1px solid #e2cdbd;
-          border-radius: 24px;
-          padding: 20px;
-          box-shadow: 0 8px 24px rgba(123, 90, 67, 0.08);
-        }
-
-        .cover-kicker {
-          font-size: 11px;
-          text-transform: uppercase;
-          letter-spacing: 1px;
-          color: #8a6954;
-          font-weight: 700;
-          margin-bottom: 8px;
+          margin: 0 auto 24px;
         }
 
         .cover-title {
-          font-size: 28px;
+          font-size: 30px;
           line-height: 1.15;
-          margin: 0 0 10px;
+          margin: 0 0 14px;
           color: #4d3527;
         }
 
         .cover-text {
-          margin: 0 0 18px;
-          font-size: 13px;
+          margin: 0 0 22px;
+          font-size: 14px;
           color: #6d5646;
+          line-height: 1.6;
         }
 
-        .cover-client {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 10px;
-          margin-bottom: 16px;
-        }
-
-        .cover-client-item {
-          background: #f4e7db;
-          border: 1px solid #e2cdbd;
-          border-radius: 14px;
-          padding: 12px;
-        }
-
-        .cover-label {
-          font-size: 10px;
-          text-transform: uppercase;
-          letter-spacing: 0.6px;
-          color: #8b6c57;
-          font-weight: 700;
-          margin-bottom: 4px;
-        }
-
-        .cover-value {
-          font-size: 13px;
-          font-weight: 700;
-          color: #34271f;
-        }
-
-        .cover-badges {
+        .cover-meta {
           display: flex;
-          flex-wrap: wrap;
+          flex-direction: column;
           gap: 8px;
         }
 
-        .cover-badge {
-          display: inline-block;
-          background: #7b5a43;
-          color: #fff;
-          border-radius: 999px;
-          padding: 7px 11px;
-          font-size: 10px;
+        .cover-meta-row {
+          font-size: 13px;
+          color: #5c4638;
+          line-height: 1.5;
+        }
+
+        .cover-meta-label {
           font-weight: 700;
+          color: #7b5a43;
+        }
+
+        .cover-meta-sep {
+          margin: 0 6px;
+          color: #a07d63;
+        }
+
+        .cover-meta-value {
+          color: #34271f;
+          font-weight: 600;
         }
 
         .cover-footer {
           text-align: center;
-          margin-top: 20px;
+          margin-top: 26px;
           font-size: 11px;
           color: #7f6553;
           font-weight: 600;
@@ -1076,8 +1037,8 @@ function buildHtml(data) {
         }
 
         .options-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
+          display: flex;
+          flex-direction: column;
           gap: 12px;
           margin-top: 10px;
         }
@@ -1089,7 +1050,7 @@ function buildHtml(data) {
           padding: 12px;
           page-break-inside: avoid;
           break-inside: avoid;
-          min-height: 100%;
+          width: 100%;
         }
 
         .option-title {
