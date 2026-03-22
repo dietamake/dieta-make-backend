@@ -41,20 +41,28 @@ function normalizeSpaces(text) {
   return String(text || '').replace(/\s+/g, ' ').trim()
 }
 
+function removeCombineNote(text) {
+  return normalizeSpaces(
+    String(text || '')
+      .replace(/\s*\(puedes combinar dos opciones tomando la mitad de cada una\)\s*/gi, '')
+      .replace(/\s*\(puedes combinar dos opciones tomando la mitad de la cantidad de cada una\)\s*/gi, '')
+  )
+}
+
 function splitByOr(text) {
   if (!text) return []
-  return normalizeSpaces(text)
+  return removeCombineNote(text)
     .split(/\s+o\s+/gi)
     .map((part) => part.trim())
     .filter(Boolean)
 }
 
 function hasChoice(line) {
-  return splitByOr(line).length > 1
+  return splitByOr(removeCombineNote(line)).length > 1
 }
 
 function renderChoiceBoxes(line) {
-  const parts = splitByOr(line)
+  const parts = splitByOr(removeCombineNote(line))
   if (parts.length <= 1) return ''
 
   return `
@@ -72,14 +80,12 @@ function renderChoiceBoxes(line) {
 }
 
 function renderFoodLine(line, index, total) {
-  const choice = hasChoice(line)
+  const cleanedLine = removeCombineNote(line)
+  const choice = hasChoice(cleanedLine)
 
   return `
     <div class="food-line">
-      <div class="food-pill ${choice ? 'food-pill-choice' : ''}">
-        ${escapeHtml(line)}
-      </div>
-      ${choice ? renderChoiceBoxes(line) : ''}
+      ${choice ? renderChoiceBoxes(cleanedLine) : `<div class="food-pill">${escapeHtml(cleanedLine)}</div>`}
       ${index < total - 1 ? '<div class="line-separator">+</div>' : ''}
     </div>
   `
@@ -1018,10 +1024,6 @@ function buildHtml(data) {
           font-size: 8.9px;
           line-height: 1.22;
           text-align: center;
-        }
-
-        .food-pill-choice {
-          margin-bottom: 4px;
         }
 
         .choice-box-label {
