@@ -124,25 +124,32 @@ function calcularCaloriasObjetivo(data) {
     alto: 1.75,
   }
 
-  const factoresGrasa = {
-    muy_tapado: 0.8,
-    normal: 0.85,
-    marcado: 0.9,
+  const ajustesGrasa = {
+    muy_tapado: -0.08,
+    normal: -0.04,
+    marcado: 0,
   }
 
-  let calorias = bmr * factoresActividad[actividad]
-  calorias *= factoresGrasa[grasa]
+  let calorias = bmr * (factoresActividad[actividad] || 1.2)
+  calorias *= 1 + (ajustesGrasa[grasa] || 0)
 
-  if (sueno < 6) calorias *= 0.95
-  if (sueno > 8) calorias *= 1.02
+  if (sueno < 6) calorias *= 0.97
+  else if (sueno > 8) calorias *= 1.01
 
-  calorias -= 200
+  let minimo = 0
 
-  if (calorias < 1600) calorias = 1600
+  if (sexo === 'mujer') {
+    minimo = Math.max(1450, peso * 22)
+  } else if (sexo === 'hombre') {
+    minimo = Math.max(1650, peso * 24)
+  } else {
+    minimo = peso * 23
+  }
+
+  if (calorias < minimo) calorias = minimo
 
   return Math.round(calorias)
 }
-
 function repartirCaloriasPorComida(caloriasObjetivo, planBase) {
   return planBase.meals.map((meal) => {
     const kcalObjetivo = Math.round(caloriasObjetivo * meal.pct)
