@@ -5,16 +5,30 @@ function escapeHtml(str) {
     .replaceAll('>', '&gt;')
 }
 
-function formatFruitBase(frutas, frutaTipo) {
-  return frutas[frutaTipo] || frutas.manzana || '1 Manzana'
+function pluralize(word, amount) {
+  if (amount === 1) return word
+  if (word === 'Caqui') return 'Caquis'
+  if (word === 'Manzana') return 'Manzanas'
+  if (word === 'Naranja grande') return 'Naranjas grandes'
+  if (word === 'Pera') return 'Peras'
+  if (word === 'Plátano') return 'Plátanos'
+  if (word === 'Kiwi') return 'Kiwis'
+  if (word === 'Mandarina') return 'Mandarinas'
+  return `${word}s`
 }
 
-function formatFruitLine(frutas, frutaTipo, frutaUnidades) {
-  const frutaBase = formatFruitBase(frutas, frutaTipo)
-
+function formatFruitOptionsLine(frutaUnidades) {
   if (!frutaUnidades || frutaUnidades <= 0) return 'Sin fruta'
-  if (frutaUnidades === 1) return frutaBase
-  return `${frutaUnidades} × ${frutaBase}`
+
+  const caqui = `${frutaUnidades} ${pluralize('Caqui', frutaUnidades)}`
+  const manzana = `${frutaUnidades} ${pluralize('Manzana', frutaUnidades)}`
+  const naranja = `${frutaUnidades} ${pluralize('Naranja grande', frutaUnidades)}`
+  const pera = `${frutaUnidades} ${pluralize('Pera', frutaUnidades)}`
+  const platano = `${frutaUnidades} ${pluralize('Plátano', frutaUnidades)}`
+  const kiwi = `${frutaUnidades * 2} ${pluralize('Kiwi', frutaUnidades * 2)}`
+  const mandarina = `${frutaUnidades * 3} ${pluralize('Mandarina', frutaUnidades * 3)}`
+
+  return `${caqui} o ${manzana} o ${naranja} o ${pera} o ${platano} o ${kiwi} o ${mandarina}`
 }
 
 function formatCenaCarbSource(carbSource, gramos) {
@@ -24,13 +38,13 @@ function formatCenaCarbSource(carbSource, gramos) {
   return `${gramos} g patata`
 }
 
-function formatSweetSource(frutas, sweetSource, frutaTipo, frutaUnidades, mielGramos) {
+function formatSweetSource(sweetSource, frutaUnidades, mielGramos) {
   if (sweetSource === 'miel') {
     if (!mielGramos || mielGramos <= 0) return 'Sin miel'
     return `${mielGramos} g miel cruda`
   }
 
-  return formatFruitLine(frutas, frutaTipo, frutaUnidades)
+  return formatFruitOptionsLine(frutaUnidades)
 }
 
 function li(text) {
@@ -48,8 +62,8 @@ function optionCard(title, lines) {
   `
 }
 
-function renderComida1Option(option, ajustes, frutas) {
-  const fruta = formatFruitLine(frutas, ajustes.frutaTipo, ajustes.frutaUnidades)
+function renderComida1Option(option, ajustes) {
+  const fruta = formatFruitOptionsLine(ajustes.frutaUnidades)
   const avena = `${ajustes.avenaGramos}g Copos de avena`
 
   const options = {
@@ -126,8 +140,8 @@ function renderComida1Option(option, ajustes, frutas) {
   return optionCard(`Opción ${option}`, options[option] || options[1])
 }
 
-function renderComida2Option(option, ajustes, frutas) {
-  const fruta = formatFruitLine(frutas, ajustes.frutaTipo, ajustes.frutaUnidades)
+function renderComida2Option(option, ajustes) {
+  const fruta = formatFruitOptionsLine(ajustes.frutaUnidades)
   const pan = `${ajustes.panGramos} g Pan de masa madre`
 
   const options = {
@@ -197,17 +211,40 @@ function renderComida2Option(option, ajustes, frutas) {
   return optionCard(`Opción ${option}`, options[option] || options[1])
 }
 
-function renderComida3Option(option, ajustes, frutas) {
-  const fruta = formatFruitLine(frutas, ajustes.frutaTipo, ajustes.frutaUnidades)
+function renderComida3Option(option, ajustesNormal, ajustesAvenaFruta, ajustesAvenaMiel) {
+  if (option === 4 || option === 7) {
+    const ajustes = ajustesAvenaFruta
+    const sweetFruta = formatSweetSource('fruta', ajustes.frutaUnidades, ajustes.mielGramos)
+    const avena = `${ajustes.avenaGramos} g Copos de avena`
+
+    const optionsAvena = {
+      4: [
+        '5 min antes de empezar a comer: Vinagre de sidra de manzana en pastilla (500 mg)',
+        'Al acabar de comer: Bisglicinato de magnesio (2 g)',
+        'Queso fresco batido desnatado (300 g)',
+        '11 g aceite de coco o 20 g chocolate 80–100%',
+        `${avena} (dejar en remojo en agua la noche anterior con un poco de vinagre de sidra de manzana, en recipiente cerrado, lugar oscuro y a temperatura ambiente; después quitar el agua, lavar varias veces y cocinar antes de consumir)`,
+        sweetFruta,
+        '50 g queso de leche cruda o 40 g chocolate 80–100% o 150 g aguacate o 35 g nueces de macadamia',
+      ],
+      7: [
+        '5 min antes de empezar a comer: Vinagre de sidra de manzana en pastilla (500 mg)',
+        'Al acabar de comer: Bisglicinato de magnesio (2 g)',
+        '250 g yogur griego natural entero',
+        '150 g claras de huevo pasteurizadas',
+        'Aceite de coco (10 g)',
+        `${avena} (opcional: mismo protocolo de remojo que opción 4)`,
+        sweetFruta,
+        '50 g queso de leche cruda o 40 g chocolate 80–100% o 150 g aguacate o 35 g nueces de macadamia',
+      ],
+    }
+
+    return optionCard(`Opción ${option}`, optionsAvena[option])
+  }
+
+  const ajustes = ajustesNormal
+  const fruta = formatFruitOptionsLine(ajustes.frutaUnidades)
   const carbPrincipal = formatCenaCarbSource(ajustes.carbSource, ajustes.carbPrincipalGramos)
-  const sweet = formatSweetSource(
-    frutas,
-    ajustes.sweetSource,
-    ajustes.frutaTipo,
-    ajustes.frutaUnidades,
-    ajustes.mielGramos
-  )
-  const avena = `${ajustes.avenaGramos} g Copos de avena`
 
   const options = {
     1: [
@@ -242,15 +279,6 @@ function renderComida3Option(option, ajustes, frutas) {
       fruta,
       '50 g queso de leche cruda o 40 g chocolate 80–100% o 150 g aguacate o 35 g nueces de macadamia',
     ],
-    4: [
-      '5 min antes de empezar a comer: Vinagre de sidra de manzana en pastilla (500 mg)',
-      'Al acabar de comer: Bisglicinato de magnesio (2 g)',
-      'Queso fresco batido desnatado (300 g)',
-      '11 g aceite de coco o 20 g chocolate 80–100%',
-      `${avena} (dejar en remojo en agua la noche anterior con un poco de vinagre de sidra de manzana, en recipiente cerrado, lugar oscuro y a temperatura ambiente; después quitar el agua, lavar varias veces y cocinar antes de consumir)`,
-      sweet,
-      '50 g queso de leche cruda o 40 g chocolate 80–100% o 150 g aguacate o 35 g nueces de macadamia',
-    ],
     5: [
       '5 min antes de empezar a comer: Vinagre de sidra de manzana en pastilla (500 mg)',
       'Al acabar de comer: Bisglicinato de magnesio (2 g)',
@@ -272,53 +300,24 @@ function renderComida3Option(option, ajustes, frutas) {
       fruta,
       '35 g nueces de macadamia o 150 g aguacate (ligeramente ajustado en grasas para compensar el salmón)',
     ],
-    7: [
-      '5 min antes de empezar a comer: Vinagre de sidra de manzana en pastilla (500 mg)',
-      'Al acabar de comer: Bisglicinato de magnesio (2 g)',
-      '250 g yogur griego natural entero',
-      '150 g claras de huevo pasteurizadas',
-      'Aceite de coco (10 g)',
-      `${avena} (opcional: mismo protocolo de remojo que opción 4)`,
-      sweet,
-      '50 g queso de leche cruda o 40 g chocolate 80–100% o 150 g aguacate o 35 g nueces de macadamia',
-    ],
   }
 
   return optionCard(`Opción ${option}`, options[option] || options[1])
 }
 
-function renderAllComida1Options(ajustes, frutas) {
-  return [1, 2, 3, 4, 5, 6, 7]
-    .map((option) => renderComida1Option(option, ajustes, frutas))
-    .join('')
-}
-
-function renderAllComida2Options(ajustes, frutas) {
-  return [1, 2, 3, 4, 5, 6, 7]
-    .map((option) => renderComida2Option(option, ajustes, frutas))
-    .join('')
-}
-
-function renderAllComida3Options(ajustes, frutas) {
-  return [1, 2, 3, 4, 5, 6, 7]
-    .map((option) => renderComida3Option(option, ajustes, frutas))
-    .join('')
+function renderRange(count, renderFn) {
+  return Array.from({ length: count }, (_, i) => renderFn(i + 1)).join('')
 }
 
 function buildHtml(data) {
-  const frutas = data.FRUTAS || {
-    caqui: '1 Caqui',
-    manzana: '1 Manzana',
-    naranja: '1 Naranja grande',
-    pera: '1 Pera',
-    platano: '1 Plátano',
-    kiwi: '2 Kiwis',
-    mandarinas: '3 Mandarinas',
-  }
-
   const comida1 = data.ajustes?.comida1 || {}
   const comida2 = data.ajustes?.comida2 || {}
-  const comida3 = data.ajustes?.comida3 || {}
+  const comida3Normal = data.ajustes?.comida3Normal || {}
+  const comida3AvenaFruta = data.ajustes?.comida3AvenaFruta || {}
+  const comida3AvenaMiel = data.ajustes?.comida3AvenaMiel || {}
+
+  const numeroOpcionesPlan =
+    data.numeroOpcionesPlan === 5 || data.numeroOpcionesPlan === 7 ? data.numeroOpcionesPlan : 1
 
   const repartoRows = (data.reparto || [])
     .map(
@@ -464,6 +463,7 @@ function buildHtml(data) {
         <div class="section-title">Resumen</div>
         <div class="metric"><strong>Calorías objetivo:</strong> ${data.caloriasObjetivo || 0} kcal</div>
         <div class="metric"><strong>Número de comidas:</strong> ${data.comidasDia || 3}</div>
+        <div class="metric"><strong>Opciones incluidas por comida:</strong> ${numeroOpcionesPlan}</div>
         <div class="metric"><strong>Reparto base:</strong> Comida 1 → 33% | Comida 2 → 24% | Comida 3 → 43%</div>
         <div class="metric">${escapeHtml(data.resumenPlan || '')}</div>
       </div>
@@ -485,28 +485,30 @@ function buildHtml(data) {
           </tbody>
         </table>
         <div class="small-note">
-          Los cambios se aplican sobre las líneas de hidratos: fruta, miel, pan, avena o patata/boniato/arroz según corresponda.
+          Los cambios se aplican sobre fruta, miel, pan, avena o patata/boniato/arroz según corresponda.
         </div>
       </div>
 
       <div class="meal-box">
         <div class="meal-title">COMIDA 1</div>
         <div class="options-grid">
-          ${renderAllComida1Options(comida1, frutas)}
+          ${renderRange(numeroOpcionesPlan, (option) => renderComida1Option(option, comida1))}
         </div>
       </div>
 
       <div class="meal-box">
         <div class="meal-title">COMIDA 2</div>
         <div class="options-grid">
-          ${renderAllComida2Options(comida2, frutas)}
+          ${renderRange(numeroOpcionesPlan, (option) => renderComida2Option(option, comida2))}
         </div>
       </div>
 
       <div class="meal-box">
         <div class="meal-title">COMIDA 3</div>
         <div class="options-grid">
-          ${renderAllComida3Options(comida3, frutas)}
+          ${renderRange(numeroOpcionesPlan, (option) =>
+            renderComida3Option(option, comida3Normal, comida3AvenaFruta, comida3AvenaMiel)
+          )}
         </div>
       </div>
     </body>
