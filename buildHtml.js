@@ -53,6 +53,26 @@ function hasChoice(line) {
   return splitByOr(line).length > 1
 }
 
+function renderChoiceBoxes(line) {
+  const parts = splitByOr(line)
+  if (parts.length <= 1) return ''
+
+  return `
+    <div class="choice-box-wrap">
+      <div class="choice-box-label">Elige una opción</div>
+      <div class="choice-box-grid">
+        ${parts
+          .map(
+            (part) => `
+              <div class="choice-box-item">${escapeHtml(part)}</div>
+            `
+          )
+          .join('')}
+      </div>
+    </div>
+  `
+}
+
 function renderFoodLine(line, index, total) {
   const choice = hasChoice(line)
 
@@ -61,7 +81,7 @@ function renderFoodLine(line, index, total) {
       <div class="food-pill ${choice ? 'food-pill-choice' : ''}">
         ${escapeHtml(line)}
       </div>
-      ${choice ? '<div class="choice-hint">Elige una opción</div>' : ''}
+      ${choice ? renderChoiceBoxes(line) : ''}
       ${index < total - 1 ? '<div class="line-separator">+</div>' : ''}
     </div>
   `
@@ -146,7 +166,7 @@ function formatFecha(dateInput) {
   return `${day}/${month}/${year}`
 }
 
-function renderCover(data, numeroOpcionesPlan) {
+function renderCover(data) {
   const objetivo = formatObjetivo(data)
   const nombre = data.nombre || 'Cliente'
   const plan = data.plan || 'Plan personalizado'
@@ -423,14 +443,14 @@ function render3Meals(data, numeroOpcionesPlan) {
   return `
     <div class="meal-box">
       <div class="meal-title">COMIDA 1</div>
-      <div class="options-grid">
+      <div class="options-grid meal-options-grid">
         ${renderRange(numeroOpcionesPlan, 7, comida1)}
       </div>
     </div>
 
     <div class="meal-box">
       <div class="meal-title">COMIDA 2</div>
-      <div class="options-grid">
+      <div class="options-grid meal-options-grid">
         ${renderRange(numeroOpcionesPlan, 7, comida2)}
       </div>
     </div>
@@ -439,7 +459,7 @@ function render3Meals(data, numeroOpcionesPlan) {
       <div class="meal-title">COMIDA 3</div>
       <div class="meal-subtext">5 min antes de empezar a comer: Vinagre de sidra de manzana en pastilla (500 mg)</div>
       <div class="meal-subtext">Al acabar de comer: Bisglicinato de magnesio (2 g)</div>
-      <div class="options-grid">
+      <div class="options-grid meal-options-grid">
         ${renderRange(numeroOpcionesPlan, 6, comida3)}
       </div>
     </div>
@@ -672,7 +692,7 @@ function render4Meals(data, numeroOpcionesPlan) {
       <div class="meal-title">COMIDA 1</div>
       <div class="meal-subtext">5–10 min antes de empezar a comer, con todas las opciones: 10 g Jengibre crudo pelado (masticar hasta poder tragar sin agua)</div>
       <div class="meal-subtext">Al acabar de comer, con todas las opciones: 1 g Bisglicinato de magnesio</div>
-      <div class="options-grid">
+      <div class="options-grid meal-options-grid">
         ${renderRange(numeroOpcionesPlan, 7, comida1)}
       </div>
     </div>
@@ -681,7 +701,7 @@ function render4Meals(data, numeroOpcionesPlan) {
       <div class="meal-title">COMIDA 2</div>
       <div class="meal-subtext">5–10 min antes de empezar a comer, con todas las opciones: 500 mg Vinagre de sidra de manzana en pastilla</div>
       <div class="meal-subtext">Al acabar de comer, con todas las opciones: 1 g Bisglicinato de magnesio</div>
-      <div class="options-grid">
+      <div class="options-grid meal-options-grid">
         ${renderRange(numeroOpcionesPlan, 5, comida2)}
       </div>
     </div>
@@ -689,7 +709,7 @@ function render4Meals(data, numeroOpcionesPlan) {
     <div class="meal-box">
       <div class="meal-title">COMIDA 3</div>
       <div class="meal-subtext">Al acabar de comer, con todas las opciones: 1 g Bisglicinato de magnesio</div>
-      <div class="options-grid">
+      <div class="options-grid meal-options-grid">
         ${renderRange(numeroOpcionesPlan, 7, comida3)}
       </div>
     </div>
@@ -697,7 +717,7 @@ function render4Meals(data, numeroOpcionesPlan) {
     <div class="meal-box">
       <div class="meal-title">COMIDA 4</div>
       <div class="meal-subtext">Al acabar de comer, con todas las opciones: 2 g Bisglicinato de magnesio</div>
-      <div class="options-grid">
+      <div class="options-grid meal-options-grid">
         ${renderRange(numeroOpcionesPlan, 3, comida4)}
       </div>
     </div>
@@ -766,7 +786,7 @@ function buildHtml(data) {
 
         .cover-shell {
           width: 100%;
-          background: rgba(255, 251, 247, 0.78);
+          background: rgba(255, 251, 247, 0.82);
           border: 1px solid #e2cfbf;
           border-radius: 18px;
           padding: 14px;
@@ -853,8 +873,8 @@ function buildHtml(data) {
         }
 
         .section-stack {
-          display: flex;
-          flex-direction: column;
+          display: grid;
+          grid-template-columns: 1fr;
           gap: 10px;
           margin-bottom: 10px;
         }
@@ -876,6 +896,7 @@ function buildHtml(data) {
           font-weight: 700;
           margin: 0 0 8px;
           color: #6e4d39;
+          text-align: center;
         }
 
         .notes-list {
@@ -917,7 +938,7 @@ function buildHtml(data) {
           font-size: 14px;
           font-weight: 800;
           color: #6b4b36;
-          margin-bottom: 3px;
+          margin-bottom: 8px;
           text-align: center;
         }
 
@@ -932,6 +953,7 @@ function buildHtml(data) {
           text-align: center;
         }
 
+        .meal-options-grid,
         .options-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
@@ -965,7 +987,7 @@ function buildHtml(data) {
         .option-lines {
           display: flex;
           flex-direction: column;
-          gap: 4px;
+          gap: 5px;
         }
 
         .food-line {
@@ -986,19 +1008,43 @@ function buildHtml(data) {
         }
 
         .food-pill-choice {
-          margin-bottom: 3px;
+          margin-bottom: 4px;
         }
 
-        .choice-hint {
+        .choice-box-wrap {
+          background: #fcf7f2;
+          border: 1px dashed #dcc2af;
+          border-radius: 10px;
+          padding: 6px;
+          margin: 0 auto 4px;
+        }
+
+        .choice-box-label {
           display: inline-block;
           background: #fff8f2;
-          border: 1px dashed #d7bda9;
+          border: 1px solid #e3cdbc;
           color: #7b5a43;
           border-radius: 999px;
           padding: 2px 8px;
           font-size: 8px;
           font-weight: 700;
-          margin: 0 auto 3px;
+          margin-bottom: 5px;
+        }
+
+        .choice-box-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 4px;
+        }
+
+        .choice-box-item {
+          background: #fff;
+          border: 1px solid #e3cfbe;
+          border-radius: 8px;
+          padding: 5px 6px;
+          font-size: 8.5px;
+          line-height: 1.18;
+          color: #4f3728;
         }
 
         .line-separator {
@@ -1006,7 +1052,7 @@ function buildHtml(data) {
           font-size: 10px;
           font-weight: 800;
           color: #7b5a43;
-          margin: 3px 0 1px;
+          margin: 4px 0 1px;
         }
 
         .footer-space {
@@ -1015,7 +1061,7 @@ function buildHtml(data) {
       </style>
     </head>
     <body>
-      ${renderCover(data, numeroOpcionesPlan)}
+      ${renderCover(data)}
 
       <div class="page">
         <div class="section-stack">
