@@ -158,13 +158,6 @@ function repartirCaloriasPorComida(caloriasObjetivo, planBase) {
   })
 }
 
-function getCarbSourceDb(carbSource) {
-  if (carbSource === 'patata') return CARB_DB.patata_cocida
-  if (carbSource === 'boniato') return CARB_DB.boniato_cocido
-  if (carbSource === 'arroz') return CARB_DB.arroz_blanco_cocido
-  return CARB_DB.patata_cocida
-}
-
 function getBaseCarbGrams(carbSource) {
   if (carbSource === 'patata') return 370
   if (carbSource === 'boniato') return 240
@@ -208,25 +201,26 @@ function ajustarComida1(deltaKcal) {
 }
 
 function ajustarComida2(deltaKcal) {
+  // Prioridad: quitar fruta antes que tocar el pan
   let deltaRestante = deltaKcal
-
-  const panGramos = ajustarGramos(
-    50,
-    deltaRestante * 0.7,
-    CARB_DB.pan_masa_madre.kcalPerGram,
-    5,
-    0
-  )
-
-  const kcalPanNueva = panGramos * CARB_DB.pan_masa_madre.kcalPerGram
-  const kcalPanBase = 50 * CARB_DB.pan_masa_madre.kcalPerGram
-  deltaRestante -= (kcalPanNueva - kcalPanBase)
 
   const frutaUnidades = ajustarFrutaUnidades(
     1,
-    deltaRestante,
+    deltaRestante * 0.75,
     CARB_DB.fruta_unidad.kcal,
     0
+  )
+
+  const kcalFrutaNueva = frutaUnidades * CARB_DB.fruta_unidad.kcal
+  const kcalFrutaBase = 1 * CARB_DB.fruta_unidad.kcal
+  deltaRestante -= (kcalFrutaNueva - kcalFrutaBase)
+
+  const panGramos = ajustarGramos(
+    50,
+    deltaRestante,
+    CARB_DB.pan_masa_madre.kcalPerGram,
+    5,
+    20
   )
 
   return {
@@ -235,36 +229,44 @@ function ajustarComida2(deltaKcal) {
   }
 }
 
-function ajustarComida3Normal(deltaKcal, carbSource = 'patata') {
-  let deltaRestante = deltaKcal
-
-  const carbDb = getCarbSourceDb(carbSource)
-  const baseCarbGrams = getBaseCarbGrams(carbSource)
-  const minCarbGrams = getMinCarbGrams(carbSource)
-
-  const carbPrincipalGramos = ajustarGramos(
-    baseCarbGrams,
-    deltaRestante * 0.75,
-    carbDb.kcalPerGram,
+function ajustarComida3Normal(deltaKcal) {
+  // Calcula las tres fuentes a la vez para que el PDF enseñe patata o boniato o arroz
+  const patataGramos = ajustarGramos(
+    370,
+    deltaKcal * 0.75,
+    CARB_DB.patata_cocida.kcalPerGram,
     10,
-    minCarbGrams
+    getMinCarbGrams('patata')
   )
 
-  const kcalPrincipalNueva = carbPrincipalGramos * carbDb.kcalPerGram
-  const kcalPrincipalBase = baseCarbGrams * carbDb.kcalPerGram
-  deltaRestante -= (kcalPrincipalNueva - kcalPrincipalBase)
+  const boniatoGramos = ajustarGramos(
+    240,
+    deltaKcal * 0.75,
+    CARB_DB.boniato_cocido.kcalPerGram,
+    10,
+    getMinCarbGrams('boniato')
+  )
+
+  const arrozGramos = ajustarGramos(
+    80,
+    deltaKcal * 0.75,
+    CARB_DB.arroz_blanco_cocido.kcalPerGram,
+    10,
+    getMinCarbGrams('arroz')
+  )
 
   const frutaUnidades = ajustarFrutaUnidades(
     1,
-    deltaRestante,
+    deltaKcal * 0.25,
     CARB_DB.fruta_unidad.kcal,
     0
   )
 
   return {
     mode: 'normal',
-    carbSource,
-    carbPrincipalGramos,
+    patataGramos,
+    boniatoGramos,
+    arrozGramos,
     frutaUnidades,
     mielGramos: null,
     avenaGramos: null,
@@ -309,8 +311,6 @@ function ajustarComida3Avena(deltaKcal, sweetSource = 'fruta') {
 
   return {
     mode: 'avena',
-    carbSource: null,
-    carbPrincipalGramos: null,
     frutaUnidades,
     mielGramos,
     avenaGramos,
@@ -327,9 +327,7 @@ function generarPlan3Comidas(caloriasObjetivo) {
     ajustes: {
       comida1: ajustarComida1(reparto[0].deltaKcal),
       comida2: ajustarComida2(reparto[1].deltaKcal),
-
-      // Para que el HTML pueda enseñar todas las opciones de comida 3 bien:
-      comida3Normal: ajustarComida3Normal(reparto[2].deltaKcal, 'patata'),
+      comida3Normal: ajustarComida3Normal(reparto[2].deltaKcal),
       comida3AvenaFruta: ajustarComida3Avena(reparto[2].deltaKcal, 'fruta'),
       comida3AvenaMiel: ajustarComida3Avena(reparto[2].deltaKcal, 'miel'),
     },
