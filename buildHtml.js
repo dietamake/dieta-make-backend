@@ -90,7 +90,10 @@ function renderFoodLine(line) {
   if (rawParts.length <= 1) {
     return `
       <div class="food-line">
-        <div class="food-pill">${escapeHtml(line)}</div>
+        <div class="food-row">
+          <span class="food-plus">+</span>
+          <div class="food-pill">${escapeHtml(line)}</div>
+        </div>
       </div>
     `
   }
@@ -103,7 +106,10 @@ function renderFoodLine(line) {
         .map(
           (part, index) => `
             <div class="choice-item">
-              <div class="food-pill choice-pill">${escapeHtml(part)}</div>
+              <div class="food-row">
+                <span class="food-plus">+</span>
+                <div class="food-pill choice-pill">${escapeHtml(part)}</div>
+              </div>
               ${index < parts.length - 1 ? '<div class="choice-separator">o</div>' : ''}
             </div>
           `
@@ -208,15 +214,6 @@ function renderCover(data, numeroOpcionesPlan) {
     ['Edad', data.edad ? `${data.edad} años` : '-'],
     ['Altura', data.altura ? `${data.altura} cm` : '-'],
     ['Peso', data.peso ? `${data.peso} kg` : '-'],
-    ['Actividad', data.actividad || '-'],
-    ['Sueño', data.sueno || '-'],
-    ['Grasa abdominal', data.grasa_abdominal || '-'],
-    ['Primera comida', data.primera_comida || '-'],
-    ['Baño', data.bano || '-'],
-    ['Despertares', data.despertares_noche || '-'],
-    ['Comidas', String(data.comidasDia || 3)],
-    ['Opciones', String(numeroOpcionesPlan)],
-    ['Kcal objetivo', data.caloriasObjetivo ? `${data.caloriasObjetivo} kcal` : '-'],
   ]
 
   return `
@@ -783,7 +780,7 @@ function buildHtml(data) {
       <style>
         @page {
           size: A4;
-          margin: 10mm;
+          margin: 8mm;
         }
 
         * {
@@ -795,8 +792,8 @@ function buildHtml(data) {
           font-family: Arial, sans-serif;
           color: #2f241d;
           background: #f8f2eb;
-          line-height: 1.35;
-          font-size: 10.5px;
+          line-height: 1.28;
+          font-size: 9.4px;
           -webkit-print-color-adjust: exact;
           print-color-adjust: exact;
         }
@@ -806,7 +803,7 @@ function buildHtml(data) {
         }
 
         .cover {
-          min-height: 275mm;
+          min-height: 279mm;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -814,110 +811,110 @@ function buildHtml(data) {
             radial-gradient(circle at top left, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 30%),
             linear-gradient(180deg, #f4e9df 0%, #ecdfd2 100%);
           border: 1px solid #dcc5b2;
-          border-radius: 26px;
-          padding: 16mm;
+          border-radius: 22px;
+          padding: 12mm;
           page-break-after: always;
         }
 
         .cover-shell {
           width: 100%;
-          background: rgba(255, 251, 247, 0.72);
+          background: rgba(255, 251, 247, 0.78);
           border: 1px solid #e2cfbf;
-          border-radius: 22px;
-          padding: 16px;
-          box-shadow: 0 8px 30px rgba(91, 67, 51, 0.08);
+          border-radius: 18px;
+          padding: 14px;
+          box-shadow: 0 8px 24px rgba(91, 67, 51, 0.08);
         }
 
         .cover-brand {
           text-align: center;
-          font-size: 46px;
+          font-size: 42px;
           font-weight: 800;
           letter-spacing: 3px;
           color: #7b5a43;
-          margin-bottom: 8px;
+          margin-bottom: 6px;
         }
 
         .cover-brand-line {
-          width: 120px;
+          width: 110px;
           height: 4px;
           background: #b08968;
           border-radius: 999px;
-          margin: 0 auto 18px;
+          margin: 0 auto 14px;
         }
 
         .cover-plan-name {
           text-align: center;
-          font-size: 24px;
-          line-height: 1.15;
+          font-size: 20px;
+          line-height: 1.12;
           color: #4d3527;
           font-weight: 700;
-          margin-bottom: 10px;
+          margin-bottom: 8px;
         }
 
         .cover-description {
           text-align: center;
-          font-size: 13px;
+          font-size: 11px;
           color: #6d5646;
-          line-height: 1.55;
-          margin: 0 auto 16px;
+          line-height: 1.45;
+          margin: 0 auto 12px;
           max-width: 130mm;
         }
 
         .cover-profile-grid {
           display: grid;
           grid-template-columns: 1fr 1fr 1fr;
-          gap: 10px;
+          gap: 8px;
         }
 
         .cover-profile-item {
           background: #fbf6f1;
           border: 1px solid #e1cdbc;
-          border-radius: 14px;
-          padding: 10px;
-          min-height: 58px;
+          border-radius: 12px;
+          padding: 8px 9px;
+          min-height: 50px;
         }
 
         .cover-profile-label {
-          font-size: 9px;
+          font-size: 8px;
           font-weight: 700;
           text-transform: uppercase;
-          letter-spacing: 0.5px;
+          letter-spacing: 0.45px;
           color: #8a6a55;
-          margin-bottom: 4px;
+          margin-bottom: 3px;
         }
 
         .cover-profile-value {
-          font-size: 11px;
+          font-size: 9.4px;
           color: #2f241d;
           font-weight: 600;
-          line-height: 1.35;
+          line-height: 1.28;
         }
 
         .cover-summary {
-          margin-top: 14px;
+          margin-top: 10px;
           background: #f7eee6;
           border: 1px solid #e7d7ca;
-          border-radius: 14px;
-          padding: 10px 12px;
+          border-radius: 12px;
+          padding: 8px 10px;
           color: #5b4333;
           text-align: center;
-          font-size: 11px;
-          line-height: 1.5;
+          font-size: 9.6px;
+          line-height: 1.4;
         }
 
         .section-stack {
           display: flex;
           flex-direction: column;
-          gap: 12px;
-          margin-bottom: 14px;
+          gap: 10px;
+          margin-bottom: 10px;
         }
 
         .card {
           background: #fffaf5;
           border: 1px solid #e2d1c2;
-          border-radius: 16px;
-          padding: 12px;
-          box-shadow: 0 2px 8px rgba(123, 90, 67, 0.05);
+          border-radius: 14px;
+          padding: 10px;
+          box-shadow: 0 2px 6px rgba(123, 90, 67, 0.05);
         }
 
         .compact-card {
@@ -925,77 +922,79 @@ function buildHtml(data) {
         }
 
         .section-title {
-          font-size: 15px;
+          font-size: 13px;
           font-weight: 700;
-          margin: 0 0 10px;
+          margin: 0 0 8px;
           color: #6e4d39;
         }
 
         .notes-list {
           display: flex;
           flex-direction: column;
-          gap: 7px;
+          gap: 6px;
         }
 
         .note-item {
           display: flex;
-          gap: 8px;
+          gap: 7px;
           align-items: flex-start;
           background: #f7ede4;
           border: 1px solid #e7d7ca;
-          border-radius: 12px;
-          padding: 8px 10px;
+          border-radius: 10px;
+          padding: 7px 8px;
         }
 
         .note-dot {
-          width: 8px;
-          height: 8px;
-          min-width: 8px;
+          width: 7px;
+          height: 7px;
+          min-width: 7px;
           border-radius: 50%;
           background: #b08968;
-          margin-top: 4px;
+          margin-top: 3px;
         }
 
         .meal-box {
           background: #fffaf5;
           border: 1px solid #deccb9;
-          border-radius: 16px;
-          padding: 12px;
-          margin-bottom: 14px;
+          border-radius: 14px;
+          padding: 10px;
+          margin-bottom: 10px;
           break-inside: avoid;
+          page-break-inside: avoid;
         }
 
         .meal-title {
-          font-size: 16px;
+          font-size: 14px;
           font-weight: 800;
           color: #6b4b36;
-          margin-bottom: 8px;
+          margin-bottom: 4px;
         }
 
         .meal-subtext {
-          font-size: 10px;
+          font-size: 8.8px;
           color: #725947;
           background: #f4e7db;
           border: 1px solid #e3cfbe;
-          border-radius: 10px;
-          padding: 7px 9px;
-          margin-bottom: 6px;
+          border-radius: 8px;
+          padding: 5px 7px;
+          margin-bottom: 5px;
         }
 
         .options-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 12px;
-          align-items: stretch;
-          margin-top: 10px;
+          gap: 8px;
+          align-items: start;
+          margin-top: 0;
         }
 
         .option-card {
           background: #ffffff;
           border: 1px solid #e5d4c4;
-          border-radius: 14px;
-          padding: 10px;
+          border-radius: 12px;
+          padding: 8px;
           break-inside: avoid;
+          page-break-inside: avoid;
           min-height: 100%;
         }
 
@@ -1004,20 +1003,38 @@ function buildHtml(data) {
           background: #7b5a43;
           color: #fff;
           border-radius: 999px;
-          padding: 5px 11px;
-          font-size: 11px;
+          padding: 4px 9px;
+          font-size: 10px;
           font-weight: 700;
-          margin-bottom: 9px;
+          margin-bottom: 7px;
         }
 
         .option-lines {
           display: flex;
           flex-direction: column;
-          gap: 7px;
+          gap: 5px;
         }
 
         .food-line {
           display: block;
+        }
+
+        .food-row {
+          display: flex;
+          align-items: flex-start;
+          gap: 5px;
+        }
+
+        .food-plus {
+          display: inline-block;
+          font-weight: 800;
+          color: #7b5a43;
+          font-size: 10px;
+          line-height: 1.1;
+          margin-top: 4px;
+          width: 8px;
+          min-width: 8px;
+          text-align: center;
         }
 
         .food-pill {
@@ -1026,17 +1043,17 @@ function buildHtml(data) {
           background: #f6eee6;
           border: 1px solid #ddc7b5;
           color: #2f241d;
-          border-radius: 12px;
-          padding: 8px 10px;
-          font-size: 10px;
-          line-height: 1.35;
+          border-radius: 10px;
+          padding: 6px 7px;
+          font-size: 8.9px;
+          line-height: 1.22;
         }
 
         .choice-stack {
           background: #fbf6f1;
           border: 1px dashed #dcc2af;
-          border-radius: 12px;
-          padding: 7px;
+          border-radius: 10px;
+          padding: 5px;
         }
 
         .choice-pill {
@@ -1044,19 +1061,19 @@ function buildHtml(data) {
         }
 
         .choice-item + .choice-item {
-          margin-top: 5px;
+          margin-top: 3px;
         }
 
         .choice-separator {
           text-align: center;
-          font-size: 10px;
+          font-size: 8.6px;
           font-weight: 700;
           color: #8b6a55;
-          margin: 4px 0 2px;
+          margin: 3px 0 1px;
         }
 
         .footer-space {
-          height: 4px;
+          height: 2px;
         }
       </style>
     </head>
