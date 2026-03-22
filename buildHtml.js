@@ -37,13 +37,89 @@ function formatFruitOrMielLine(frutaUnidades, mielGramos, extra = '') {
   return `${miel} o ${fruta}${extra ? ` ${extra}` : ''}`
 }
 
+function normalizeSpaces(text) {
+  return String(text || '').replace(/\s+/g, ' ').trim()
+}
+
+function splitByOr(text) {
+  if (!text) return []
+  return normalizeSpaces(text)
+    .split(/\s+o\s+/gi)
+    .map((part) => part.trim())
+    .filter(Boolean)
+}
+
+function extractLeadingAmount(text) {
+  const clean = normalizeSpaces(text)
+  const patterns = [
+    /^(\d+(?:[.,]\d+)?\s*(?:g|gr|kg|ml|l|ud|uds|unidad|unidades))\s+/i,
+    /^(\d+(?:[.,]\d+)?)\s+(huevos?|claras?)\b/i,
+    /^(\d+\s*lata(?:s)?(?:\s+escurrida)?(?:\s*\([^)]+\))?)\s+/i,
+    /^(\d+\s*huevos?\s+enteros?\s*\+\s*\d+(?:[.,]\d+)?\s*g\s*claras?\s+de\s+huevo)\b/i,
+  ]
+
+  for (const pattern of patterns) {
+    const match = clean.match(pattern)
+    if (match) return match[1]
+  }
+
+  return null
+}
+
+function startsWithAmount(text) {
+  return !!extractLeadingAmount(text)
+}
+
+function expandChoiceAmounts(parts) {
+  if (!parts || parts.length <= 1) return parts || []
+
+  const firstAmount = extractLeadingAmount(parts[0])
+  if (!firstAmount) return parts
+
+  return parts.map((part, index) => {
+    const clean = normalizeSpaces(part)
+    if (index === 0) return clean
+    if (startsWithAmount(clean)) return clean
+    return `${firstAmount} ${clean}`
+  })
+}
+
+function renderFoodLine(line) {
+  const rawParts = splitByOr(line)
+
+  if (rawParts.length <= 1) {
+    return `
+      <div class="food-line">
+        <div class="food-pill">${escapeHtml(line)}</div>
+      </div>
+    `
+  }
+
+  const parts = expandChoiceAmounts(rawParts)
+
+  return `
+    <div class="food-line choice-stack">
+      ${parts
+        .map(
+          (part, index) => `
+            <div class="choice-item">
+              <div class="food-pill choice-pill">${escapeHtml(part)}</div>
+              ${index < parts.length - 1 ? '<div class="choice-separator">o</div>' : ''}
+            </div>
+          `
+        )
+        .join('')}
+    </div>
+  `
+}
+
 function optionCard(title, lines) {
   return `
     <div class="option-card">
       <div class="option-title">${escapeHtml(title)}</div>
-      <ul>
-        ${lines.map((line) => `<li>${escapeHtml(line)}</li>`).join('')}
-      </ul>
+      <div class="option-lines">
+        ${lines.map((line) => renderFoodLine(line)).join('')}
+      </div>
     </div>
   `
 }
@@ -53,9 +129,18 @@ function renderNotas(title, items) {
   return `
     <div class="card">
       <div class="section-title">${escapeHtml(title)}</div>
-      <ul>
-        ${items.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}
-      </ul>
+      <div class="notes-list">
+        ${items
+          .map(
+            (item) => `
+              <div class="note-item">
+                <span class="note-dot"></span>
+                <span>${escapeHtml(item)}</span>
+              </div>
+            `
+          )
+          .join('')}
+      </div>
     </div>
   `
 }
@@ -63,6 +148,121 @@ function renderNotas(title, items) {
 function renderRange(maxPlanOptions, maxMealOptions, renderFn) {
   const count = Math.min(maxPlanOptions, maxMealOptions)
   return Array.from({ length: count }, (_, i) => renderFn(i + 1)).join('')
+}
+
+function formatObjetivo(data) {
+  if (Array.isArray(data.objetivo)) return data.objetivo.join(', ')
+  return data.objetivo || data.tituloPlan || '-'
+}
+
+function formatFecha(dateInput) {
+  const date = dateInput ? new Date(dateInput) : new Date()
+  const day = String(date.getDate()).padStart(2, '0')
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const year = date.getFullYear()
+  return `${day}/${month}/${year}`
+}
+
+function renderCover(data, numeroOpcionesPlan) {
+  const objetivo = formatObjetivo(data)
+  const nombre = data.nombre || 'Cliente'
+  const plan = data.plan || 'Plan personalizado'
+  const fecha = formatFecha(data.fechaGeneracion)
+
+  const badges = [
+    `Objetivo: ${objetivo || '-'}`,
+    `Comidas: ${data.comidasDia || 3}`,
+    `Opciones por comida: ${numeroOpcionesPlan}`,
+    data.caloriasObjetivo ? `Kcal objetivo: ${data.caloriasObjetivo}` : '',
+  ].filter(Boolean)
+
+  return `
+    <section class="cover">
+      <div class="cover-brand-wrap">
+        <div class="cover-brand">DIETA MAKE</div>
+        <div class="cover-brand-line"></div>
+      </div>
+
+      <div class="cover-panel">
+        <div class="cover-kicker">Plan nutricional personalizado</div>
+        <h1 class="cover-title">${escapeHtml(data.tituloPlan || 'Plan nutricional personalizado')}</h1>
+        <p class="cover-text">
+          Diseñado según el perfil, el objetivo y la estructura de comidas del cliente.
+        </p>
+
+        <div class="cover-client">
+          <div class="cover-client-item">
+            <div class="cover-label">Cliente</div>
+            <div class="cover-value">${escapeHtml(nombre)}</div>
+          </div>
+          <div class="cover-client-item">
+            <div class="cover-label">Objetivo</div>
+            <div class="cover-value">${escapeHtml(objetivo)}</div>
+          </div>
+          <div class="cover-client-item">
+            <div class="cover-label">Plan</div>
+            <div class="cover-value">${escapeHtml(plan)}</div>
+          </div>
+          <div class="cover-client-item">
+            <div class="cover-label">Fecha</div>
+            <div class="cover-value">${escapeHtml(fecha)}</div>
+          </div>
+        </div>
+
+        <div class="cover-badges">
+          ${badges.map((badge) => `<span class="cover-badge">${escapeHtml(badge)}</span>`).join('')}
+        </div>
+      </div>
+
+      <div class="cover-footer">Guía visual de comidas y opciones</div>
+    </section>
+  `
+}
+
+function renderClientProfile(data, numeroOpcionesPlan) {
+  const objetivo = formatObjetivo(data)
+
+  const profileItems = [
+    ['Nombre', data.nombre || '-'],
+    ['Email', data.email || '-'],
+    ['Sexo', data.sexo || '-'],
+    ['Edad', data.edad ? `${data.edad} años` : '-'],
+    ['Altura', data.altura ? `${data.altura} cm` : '-'],
+    ['Peso', data.peso ? `${data.peso} kg` : '-'],
+    ['Objetivo', objetivo || '-'],
+    ['Actividad diaria', data.actividad || '-'],
+    ['Horas de sueño', data.sueno || '-'],
+    ['Grasa abdominal', data.grasa_abdominal || '-'],
+    ['Primera comida', data.primera_comida || '-'],
+    ['Frecuencia de baño', data.bano || '-'],
+    ['Despertares nocturnos', data.despertares_noche || '-'],
+    ['Comidas al día', data.comidasDia || 3],
+    ['Opciones por comida', numeroOpcionesPlan],
+    ['Calorías objetivo', data.caloriasObjetivo ? `${data.caloriasObjetivo} kcal` : '-'],
+  ]
+
+  return `
+    <div class="card">
+      <div class="section-title">Perfil de cliente</div>
+      <div class="profile-grid">
+        ${profileItems
+          .map(
+            ([label, value]) => `
+              <div class="profile-item">
+                <div class="profile-label">${escapeHtml(label)}</div>
+                <div class="profile-value">${escapeHtml(value)}</div>
+              </div>
+            `
+          )
+          .join('')}
+      </div>
+      ${
+        data.resumenPlan
+          ? `<div class="profile-summary">${escapeHtml(data.resumenPlan)}</div>`
+          : ''
+      }
+    </div>
+  `
 }
 
 /* ====== 3 COMIDAS ====== */
@@ -76,75 +276,75 @@ function render3Meals(data, numeroOpcionesPlan) {
 
   const comida1 = (option) => {
     const fruta = formatFruitOptionsLine(c1.frutaUnidades)
-    const avena = `${c1.avenaGramos}g Copos de avena`
+    const avena = `${c1.avenaGramos} g Copos de avena`
 
     const options = {
       1: [
         'Café al gusto',
-        '500ml Leche fresca desnatada',
+        '500 ml Leche fresca desnatada',
         'Canela ceylán al gusto',
-        '10g Colágeno bovino hidrolizado',
-        '1 Lata de mejillones al natural o 1 Lata escurrida (56g) de atún al natural o 100g Almejas salvajes o 75g Ostras o 75 Vieiras o 120g Gambas salvajes (puedes combinar dos opciones tomando la mitad de cada una)',
+        '10 g Colágeno bovino hidrolizado',
+        '1 lata de mejillones al natural o 1 lata escurrida (56 g) de atún al natural o 100 g almejas salvajes o 75 g ostras o 75 g vieiras o 120 g gambas salvajes (puedes combinar dos opciones tomando la mitad de cada una)',
         fruta,
-        '50g Queso de leche cruda o 40g Chocolate 80-100% o 30g Mantequilla / 24g Aceite de coco o 150g Aguacate o 35g Nueces de macadamia',
+        '50 g Queso de leche cruda o 40 g Chocolate 80-100% o 30 g Mantequilla o 24 g Aceite de coco o 150 g Aguacate o 35 g Nueces de macadamia',
         avena,
       ],
       2: [
         'Café al gusto',
-        '270g Queso fresco batido desnatado',
+        '270 g Queso fresco batido desnatado',
         'Canela ceylán al gusto',
-        '12g Colágeno bovino hidrolizado',
+        '12 g Colágeno bovino hidrolizado',
         fruta,
-        '50g Queso de leche cruda o 40g Chocolate 80-100% o 30g Mantequilla o 50g Leche condensada + 12g Aceite de coco o 24g Aceite de coco o 150g Aguacate o 35g Nueces de macadamia',
+        '50 g Queso de leche cruda o 40 g Chocolate 80-100% o 30 g Mantequilla o 50 g Leche condensada + 12 g Aceite de coco o 24 g Aceite de coco o 150 g Aguacate o 35 g Nueces de macadamia',
         avena,
       ],
       3: [
         'Café al gusto',
-        '500ml Leche fresca desnatada',
+        '500 ml Leche fresca desnatada',
         'Canela ceylán al gusto',
-        '12g Colágeno bovino hidrolizado',
-        '60g Hígado de vaca o Hígado de cordero',
+        '12 g Colágeno bovino hidrolizado',
+        '60 g Hígado de vaca o 60 g Hígado de cordero',
         fruta,
-        '50g Queso de leche cruda o 40g Chocolate 80-100% o 30g Mantequilla o 50g Leche condensada + 12g Aceite de coco o 24g Aceite de coco o 150g Aguacate o 35g Nueces de macadamia',
+        '50 g Queso de leche cruda o 40 g Chocolate 80-100% o 30 g Mantequilla o 50 g Leche condensada + 12 g Aceite de coco o 24 g Aceite de coco o 150 g Aguacate o 35 g Nueces de macadamia',
         avena,
       ],
       4: [
         'Café al gusto',
-        '250g Queso fresco desnatado',
+        '250 g Queso fresco desnatado',
         'Canela ceylán al gusto',
-        '12g Colágeno bovino hidrolizado',
+        '12 g Colágeno bovino hidrolizado',
         fruta,
-        '50g Queso de leche cruda o 40g Chocolate 80-100% o 30g Mantequilla o 50g Leche condensada + 12g Aceite de coco o 24g Aceite de coco o 150g Aguacate o 35g Nueces de macadamia',
+        '50 g Queso de leche cruda o 40 g Chocolate 80-100% o 30 g Mantequilla o 50 g Leche condensada + 12 g Aceite de coco o 24 g Aceite de coco o 150 g Aguacate o 35 g Nueces de macadamia',
         avena,
       ],
       5: [
         'Café al gusto',
-        '125g Queso fresco batido desnatado',
+        '125 g Queso fresco batido desnatado',
         'Canela ceylán al gusto',
-        '12g Colágeno bovino hidrolizado',
-        '150g Claras de huevo pasteurizadas',
+        '12 g Colágeno bovino hidrolizado',
+        '150 g Claras de huevo pasteurizadas',
         fruta,
-        '50g Queso de leche cruda o 40g Chocolate 80-100% o 30g Mantequilla o 50g Leche condensada + 12g Aceite de coco o 24g Aceite de coco o 150g Aguacate o 35g Nueces de macadamia',
+        '50 g Queso de leche cruda o 40 g Chocolate 80-100% o 30 g Mantequilla o 50 g Leche condensada + 12 g Aceite de coco o 24 g Aceite de coco o 150 g Aguacate o 35 g Nueces de macadamia',
         avena,
       ],
       6: [
         'Café al gusto',
-        '200g Queso fresco batido desnatado',
+        '200 g Queso fresco batido desnatado',
         'Canela ceylán al gusto',
-        '12g Colágeno bovino hidrolizado',
-        '250ml Leche fresca desnatada',
+        '12 g Colágeno bovino hidrolizado',
+        '250 ml Leche fresca desnatada',
         fruta,
-        '50g Queso de leche cruda o 40g Chocolate 80-100% o 30g Mantequilla o 50g Leche condensada + 12g Aceite de coco o 24g Aceite de coco o 150g Aguacate o 35g Nueces de macadamia',
+        '50 g Queso de leche cruda o 40 g Chocolate 80-100% o 30 g Mantequilla o 50 g Leche condensada + 12 g Aceite de coco o 24 g Aceite de coco o 150 g Aguacate o 35 g Nueces de macadamia',
         avena,
       ],
       7: [
         'Café al gusto',
-        '250ml Leche fresca desnatada',
+        '250 ml Leche fresca desnatada',
         'Canela ceylán al gusto',
-        '12g Colágeno bovino hidrolizado',
-        '200g Claras de huevo pasteurizadas',
+        '12 g Colágeno bovino hidrolizado',
+        '200 g Claras de huevo pasteurizadas',
         fruta,
-        '50g Queso de leche cruda o 40g Chocolate 80-100% o 30g Mantequilla o 50g Leche condensada + 12g Aceite de coco o 24g Aceite de coco o 150g Aguacate o 35g Nueces de macadamia',
+        '50 g Queso de leche cruda o 40 g Chocolate 80-100% o 30 g Mantequilla o 50 g Leche condensada + 12 g Aceite de coco o 24 g Aceite de coco o 150 g Aguacate o 35 g Nueces de macadamia',
         avena,
       ],
     }
@@ -158,64 +358,64 @@ function render3Meals(data, numeroOpcionesPlan) {
 
     const options = {
       1: [
-        'Leche fresca desnatada (500 ml)',
-        'Colágeno bovino hidrolizado (10 g)',
+        '500 ml Leche fresca desnatada',
+        '10 g Colágeno bovino hidrolizado',
         '1 lata de mejillones al natural o 1 lata escurrida (56 g) de atún al natural o 100 g almejas salvajes o 75 g ostras o 75 g vieiras o 120 g gambas salvajes (puedes combinar dos opciones tomando la mitad de cada una)',
         fruta,
         pan,
-        'Aceite de oliva virgen extra prensado en frío (5 ml)',
+        '5 ml Aceite de oliva virgen extra prensado en frío',
         'Tomate al gusto',
       ],
       2: [
-        'Queso fresco batido desnatado (270 g)',
-        'Colágeno bovino hidrolizado (12 g)',
+        '270 g Queso fresco batido desnatado',
+        '12 g Colágeno bovino hidrolizado',
         fruta,
         pan,
-        'Aceite de oliva virgen extra prensado en frío (5 ml)',
+        '5 ml Aceite de oliva virgen extra prensado en frío',
         'Tomate al gusto',
       ],
       3: [
-        'Leche fresca desnatada (500 ml)',
-        'Colágeno bovino hidrolizado (12 g)',
-        '60 g hígado de vaca o hígado de cordero',
+        '500 ml Leche fresca desnatada',
+        '12 g Colágeno bovino hidrolizado',
+        '60 g Hígado de vaca o 60 g Hígado de cordero',
         fruta,
         pan,
-        'Aceite de oliva virgen extra prensado en frío (5 ml)',
+        '5 ml Aceite de oliva virgen extra prensado en frío',
         'Tomate al gusto',
       ],
       4: [
-        'Queso fresco desnatado (250 g)',
-        'Colágeno bovino hidrolizado (12 g)',
+        '250 g Queso fresco desnatado',
+        '12 g Colágeno bovino hidrolizado',
         fruta,
         pan,
-        'Aceite de oliva virgen extra prensado en frío (5 ml)',
+        '5 ml Aceite de oliva virgen extra prensado en frío',
         'Tomate al gusto',
       ],
       5: [
-        'Queso fresco batido desnatado (125 g)',
-        'Colágeno bovino hidrolizado (12 g)',
-        'Claras de huevo pasteurizadas (150 g)',
+        '125 g Queso fresco batido desnatado',
+        '12 g Colágeno bovino hidrolizado',
+        '150 g Claras de huevo pasteurizadas',
         fruta,
         pan,
-        'Aceite de oliva virgen extra prensado en frío (5 ml)',
+        '5 ml Aceite de oliva virgen extra prensado en frío',
         'Tomate al gusto',
       ],
       6: [
-        'Queso fresco batido desnatado (200 g)',
-        'Colágeno bovino hidrolizado (12 g)',
-        'Leche fresca desnatada (250 ml)',
+        '200 g Queso fresco batido desnatado',
+        '12 g Colágeno bovino hidrolizado',
+        '250 ml Leche fresca desnatada',
         fruta,
         pan,
-        'Aceite de oliva virgen extra prensado en frío (5 ml)',
+        '5 ml Aceite de oliva virgen extra prensado en frío',
         'Tomate al gusto',
       ],
       7: [
-        'Leche fresca desnatada (250 ml)',
-        'Colágeno bovino hidrolizado (12 g)',
-        'Claras de huevo pasteurizadas (200 g)',
+        '250 ml Leche fresca desnatada',
+        '12 g Colágeno bovino hidrolizado',
+        '200 g Claras de huevo pasteurizadas',
         fruta,
         pan,
-        'Aceite de oliva virgen extra prensado en frío (5 ml)',
+        '5 ml Aceite de oliva virgen extra prensado en frío',
         'Tomate al gusto',
       ],
     }
@@ -226,60 +426,60 @@ function render3Meals(data, numeroOpcionesPlan) {
   const comida3 = (option) => {
     if (option === 4) {
       return optionCard('Opción 4', [
-        'Queso fresco batido desnatado (300 g)',
-        '11 g aceite de coco o 20 g chocolate 80–100%',
+        '300 g Queso fresco batido desnatado',
+        '11 g Aceite de coco o 20 g Chocolate 80–100%',
         `${c3a.avenaGramos} g Copos de avena (dejar en remojo en agua la noche anterior con un poco de vinagre de sidra de manzana, en recipiente cerrado, lugar oscuro y a temperatura ambiente; después quitar el agua, lavar varias veces y cocinar antes de consumir)`,
         formatFruitOrMielLine(c3a.frutaUnidades, c3a.mielGramos),
-        '50 g queso de leche cruda o 40 g chocolate 80–100% o 150 g aguacate o 35 g nueces de macadamia',
+        '50 g Queso de leche cruda o 40 g Chocolate 80–100% o 150 g Aguacate o 35 g Nueces de macadamia',
       ])
     }
 
-    const carbLine = `${c3n.patataGramos} g patata o ${c3n.boniatoGramos} g boniato o ${c3n.arrozGramos} g arroz blanco cocido`
+    const carbLine = `${c3n.patataGramos} g Patata o ${c3n.boniatoGramos} g Boniato o ${c3n.arrozGramos} g Arroz blanco cocido`
     const fruta = formatFruitOptionsLine(c3n.frutaUnidades)
 
     const options = {
       1: [
-        'Carne picada de ternera (150 g)',
-        'Aceite de coco (5 g)',
+        '150 g Carne picada de ternera',
+        '5 g Aceite de coco',
         carbLine,
-        '150 g pimientos rojos o 150 g calabacín o 150 g pepino o 200 g champiñones (hervir como mínimo durante 1 h)',
+        '150 g Pimientos rojos o 150 g Calabacín o 150 g Pepino o 200 g Champiñones (hervir como mínimo durante 1 h)',
         fruta,
-        '50 g queso de leche cruda o 40 g chocolate 80–100% o 150 g aguacate o 35 g nueces de macadamia',
+        '50 g Queso de leche cruda o 40 g Chocolate 80–100% o 150 g Aguacate o 35 g Nueces de macadamia',
       ],
       2: [
-        '290 g gambas salvajes o 175 g ostras o 190 g pulpo cocido o 185 g merluza o 245 g bacalao o 170 g boquerones salvajes (puedes combinar dos opciones tomando la mitad de la cantidad de cada una)',
-        'Aceite de oliva virgen extra prensado en frío (8 g)',
-        'Aceite de coco (5 g)',
+        '290 g Gambas salvajes o 175 g Ostras o 190 g Pulpo cocido o 185 g Merluza o 245 g Bacalao o 170 g Boquerones salvajes (puedes combinar dos opciones tomando la mitad de la cantidad de cada una)',
+        '8 g Aceite de oliva virgen extra prensado en frío',
+        '5 g Aceite de coco',
         carbLine,
-        '150 g pimientos rojos o 150 g calabacín o 150 g pepino o 200 g champiñones (hervir como mínimo durante 1 h)',
+        '150 g Pimientos rojos o 150 g Calabacín o 150 g Pepino o 200 g Champiñones (hervir como mínimo durante 1 h)',
         fruta,
-        '50 g queso de leche cruda o 40 g chocolate 80–100% o 150 g aguacate o 35 g nueces de macadamia',
+        '50 g Queso de leche cruda o 40 g Chocolate 80–100% o 150 g Aguacate o 35 g Nueces de macadamia',
       ],
       3: [
-        '140 g pechuga de pollo o pechuga de pavo o lomo de cerdo',
-        'Aceite de oliva virgen extra prensado en frío (7 g)',
-        'Aceite de coco (5 g)',
+        '140 g Pechuga de pollo o 140 g Pechuga de pavo o 140 g Lomo de cerdo',
+        '7 g Aceite de oliva virgen extra prensado en frío',
+        '5 g Aceite de coco',
         carbLine,
-        '150 g pimientos rojos o 150 g calabacín o 150 g pepino o 200 g champiñones (hervir como mínimo durante 1 h)',
+        '150 g Pimientos rojos o 150 g Calabacín o 150 g Pepino o 200 g Champiñones (hervir como mínimo durante 1 h)',
         fruta,
-        '50 g queso de leche cruda o 40 g chocolate 80–100% o 150 g aguacate o 35 g nueces de macadamia',
+        '50 g Queso de leche cruda o 40 g Chocolate 80–100% o 150 g Aguacate o 35 g Nueces de macadamia',
       ],
       5: [
-        '2 huevos enteros + 180 g claras de huevo',
-        'Aceite de oliva virgen extra prensado en frío (7 g)',
-        'Aceite de coco (5 g)',
+        '2 huevos enteros + 180 g Claras de huevo',
+        '7 g Aceite de oliva virgen extra prensado en frío',
+        '5 g Aceite de coco',
         carbLine,
-        '150 g pimientos rojos o 150 g calabacín o 150 g pepino o 200 g champiñones (hervir como mínimo durante 1 h)',
+        '150 g Pimientos rojos o 150 g Calabacín o 150 g Pepino o 200 g Champiñones (hervir como mínimo durante 1 h)',
         fruta,
-        '50 g queso de leche cruda o 40 g chocolate 80–100% o 150 g aguacate o 35 g nueces de macadamia',
+        '50 g Queso de leche cruda o 40 g Chocolate 80–100% o 150 g Aguacate o 35 g Nueces de macadamia',
       ],
       6: [
-        '200 g salmón',
-        'Aceite de oliva virgen extra prensado en frío (5 g)',
+        '200 g Salmón',
+        '5 g Aceite de oliva virgen extra prensado en frío',
         carbLine,
-        '150 g pimientos rojos o 150 g calabacín o 150 g pepino o 200 g champiñones (hervir como mínimo durante 1 h)',
+        '150 g Pimientos rojos o 150 g Calabacín o 150 g Pepino o 200 g Champiñones (hervir como mínimo durante 1 h)',
         fruta,
-        '35 g nueces de macadamia o 150 g aguacate (ligeramente ajustado en grasas para compensar el salmón)',
+        '35 g Nueces de macadamia o 150 g Aguacate (ligeramente ajustado en grasas para compensar el salmón)',
       ],
     }
 
@@ -331,9 +531,9 @@ function render4Meals(data, numeroOpcionesPlan) {
         '500 ml Leche fresca desnatada',
         'Canela ceylán al gusto',
         '10 g Colágeno bovino hidrolizado',
-        '1 lata de mejillones al natural o 1 lata escurrida (56 g) de atún al natural o 100 g almejas salvajes o 75 g ostras o 75 vieiras o 120 g gambas salvajes (puedes combinar dos opciones tomando la mitad de cada una)',
+        '1 lata de mejillones al natural o 1 lata escurrida (56 g) de atún al natural o 100 g almejas salvajes o 75 g ostras o 75 g vieiras o 120 g gambas salvajes (puedes combinar dos opciones tomando la mitad de cada una)',
         fruta,
-        '25 g queso de leche cruda o 20 g chocolate 80–100% o 15 g mantequilla o 25 g leche condensada + 6 g aceite de coco o 12 g aceite de coco',
+        '25 g Queso de leche cruda o 20 g Chocolate 80–100% o 15 g Mantequilla o 25 g Leche condensada + 6 g Aceite de coco o 12 g Aceite de coco',
       ],
       2: [
         'Café al gusto',
@@ -341,16 +541,16 @@ function render4Meals(data, numeroOpcionesPlan) {
         'Canela ceylán al gusto',
         '12 g Colágeno bovino hidrolizado',
         fruta,
-        '25 g queso de leche cruda o 20 g chocolate 80–100% o 15 g mantequilla o 25 g leche condensada + 6 g aceite de coco o 12 g aceite de coco',
+        '25 g Queso de leche cruda o 20 g Chocolate 80–100% o 15 g Mantequilla o 25 g Leche condensada + 6 g Aceite de coco o 12 g Aceite de coco',
       ],
       3: [
         'Café al gusto',
         '500 ml Leche fresca desnatada',
         'Canela ceylán al gusto',
         '12 g Colágeno bovino hidrolizado',
-        '60 g Hígado de vaca o hígado de cordero',
+        '60 g Hígado de vaca o 60 g Hígado de cordero',
         fruta,
-        '25 g queso de leche cruda o 20 g chocolate 80–100% o 15 g mantequilla o 25 g leche condensada + 6 g aceite de coco o 12 g aceite de coco',
+        '25 g Queso de leche cruda o 20 g Chocolate 80–100% o 15 g Mantequilla o 25 g Leche condensada + 6 g Aceite de coco o 12 g Aceite de coco',
       ],
       4: [
         'Café al gusto',
@@ -358,7 +558,7 @@ function render4Meals(data, numeroOpcionesPlan) {
         'Canela ceylán al gusto',
         '12 g Colágeno bovino hidrolizado',
         fruta,
-        '25 g queso de leche cruda o 20 g chocolate 80–100% o 15 g mantequilla o 25 g leche condensada + 6 g aceite de coco o 12 g aceite de coco',
+        '25 g Queso de leche cruda o 20 g Chocolate 80–100% o 15 g Mantequilla o 25 g Leche condensada + 6 g Aceite de coco o 12 g Aceite de coco',
       ],
       5: [
         'Café al gusto',
@@ -367,7 +567,7 @@ function render4Meals(data, numeroOpcionesPlan) {
         '12 g Colágeno bovino hidrolizado',
         '150 g Claras de huevo pasteurizadas',
         fruta,
-        '25 g queso de leche cruda o 20 g chocolate 80–100% o 15 g mantequilla o 25 g leche condensada + 6 g aceite de coco o 12 g aceite de coco',
+        '25 g Queso de leche cruda o 20 g Chocolate 80–100% o 15 g Mantequilla o 25 g Leche condensada + 6 g Aceite de coco o 12 g Aceite de coco',
       ],
       6: [
         'Café al gusto',
@@ -376,7 +576,7 @@ function render4Meals(data, numeroOpcionesPlan) {
         '12 g Colágeno bovino hidrolizado',
         '250 ml Leche fresca desnatada',
         fruta,
-        '25 g queso de leche cruda o 20 g chocolate 80–100% o 15 g mantequilla o 25 g leche condensada + 6 g aceite de coco o 12 g aceite de coco',
+        '25 g Queso de leche cruda o 20 g Chocolate 80–100% o 15 g Mantequilla o 25 g Leche condensada + 6 g Aceite de coco o 12 g Aceite de coco',
       ],
       7: [
         'Café al gusto',
@@ -385,7 +585,7 @@ function render4Meals(data, numeroOpcionesPlan) {
         '12 g Colágeno bovino hidrolizado',
         '200 g Claras de huevo pasteurizadas',
         fruta,
-        '25 g queso de leche cruda o 20 g chocolate 80–100% o 15 g mantequilla o 25 g leche condensada + 6 g aceite de coco o 12 g aceite de coco',
+        '25 g Queso de leche cruda o 20 g Chocolate 80–100% o 15 g Mantequilla o 25 g Leche condensada + 6 g Aceite de coco o 12 g Aceite de coco',
       ],
     }
 
@@ -396,13 +596,13 @@ function render4Meals(data, numeroOpcionesPlan) {
     if (option === 5) {
       return optionCard('Opción 5', [
         '300 g Queso fresco batido desnatado',
-        '11 g Aceite de coco o 20 g chocolate 80–100%',
+        '11 g Aceite de coco o 20 g Chocolate 80–100%',
         `${c2a.avenaGramos} g Copos de avena (dejar en remojo en agua la noche anterior, con un poco de vinagre de sidra de manzana, dentro de un recipiente cerrado, en un lugar oscuro y a temperatura ambiente. Quitar el agua, lavar varias veces y cocinar antes de consumir)`,
         formatFruitOrMielLine(c2a.frutaUnidades, c2a.mielGramos),
       ])
     }
 
-    const carbLine = `${c2n.patataGramos} g Patata o ${c2n.boniatoGramos} g boniato o ${c2n.calabazaGramos} g calabaza`
+    const carbLine = `${c2n.patataGramos} g Patata o ${c2n.boniatoGramos} g Boniato o ${c2n.calabazaGramos} g Calabaza`
     const fruta = formatFruitOptionsLine(c2n.frutaUnidades)
 
     const options = {
@@ -410,25 +610,25 @@ function render4Meals(data, numeroOpcionesPlan) {
         '150 g Carne picada de ternera',
         '5 g Aceite de coco',
         `${carbLine} (puedes combinar dos opciones tomando la mitad de la cantidad de cada una)`,
-        '150 g Pimientos rojos o 150 g calabacín o 150 g pepino o 200 g champiñones (hervir como mínimo durante 1 h)',
+        '150 g Pimientos rojos o 150 g Calabacín o 150 g Pepino o 200 g Champiñones (hervir como mínimo durante 1 h)',
         fruta,
         'Tomate, cebolla cruda y/o pimiento verde crudo al gusto',
       ],
       2: [
-        '290 g Gambas salvajes o 175 g ostras o 190 g pulpo cocido o 185 g merluza o 245 g bacalao o 170 g boquerones salvajes (puedes combinar dos opciones tomando la mitad de la cantidad de cada una)',
+        '290 g Gambas salvajes o 175 g Ostras o 190 g Pulpo cocido o 185 g Merluza o 245 g Bacalao o 170 g Boquerones salvajes (puedes combinar dos opciones tomando la mitad de la cantidad de cada una)',
         '8 g Aceite de oliva virgen extra prensado en frío',
         '5 g Aceite de coco',
         `${carbLine} (puedes combinar dos opciones tomando la mitad de la cantidad de cada una)`,
-        '150 g Pimientos rojos o 150 g calabacín o 150 g pepino o 200 g champiñones (hervir como mínimo durante 1 h)',
+        '150 g Pimientos rojos o 150 g Calabacín o 150 g Pepino o 200 g Champiñones (hervir como mínimo durante 1 h)',
         fruta,
         'Tomate, cebolla cruda y/o pimiento verde crudo al gusto',
       ],
       3: [
-        '140 g Pechuga de pollo o pechuga de pavo o lomo de cerdo',
+        '140 g Pechuga de pollo o 140 g Pechuga de pavo o 140 g Lomo de cerdo',
         '7 g Aceite de oliva virgen extra prensado en frío',
         '5 g Aceite de coco',
         `${carbLine} (puedes combinar dos opciones tomando la mitad de la cantidad de cada una)`,
-        '150 g Pimientos rojos o 150 g calabacín o 150 g pepino o 200 g champiñones (hervir como mínimo durante 1 h)',
+        '150 g Pimientos rojos o 150 g Calabacín o 150 g Pepino o 200 g Champiñones (hervir como mínimo durante 1 h)',
         fruta,
         'Tomate, cebolla cruda y/o pimiento verde crudo al gusto',
       ],
@@ -436,7 +636,7 @@ function render4Meals(data, numeroOpcionesPlan) {
         '150 g Claras de huevo pasteurizadas',
         '2 Huevos',
         `${carbLine} (puedes combinar dos opciones tomando la mitad de la cantidad de cada una)`,
-        '150 g Pimientos rojos o 150 g calabacín o 150 g pepino o 200 g champiñones (hervir como mínimo durante 1 h)',
+        '150 g Pimientos rojos o 150 g Calabacín o 150 g Pepino o 200 g Champiñones (hervir como mínimo durante 1 h)',
         fruta,
         'Tomate, cebolla cruda y/o pimiento verde crudo al gusto',
       ],
@@ -453,7 +653,7 @@ function render4Meals(data, numeroOpcionesPlan) {
         'Café al gusto',
         '500 ml Leche fresca desnatada',
         '10 g Colágeno bovino hidrolizado',
-        '1 lata de mejillones al natural o 1 lata escurrida (56 g) de atún al natural o 100 g almejas salvajes o 75 g ostras o 75 vieiras o 120 g gambas salvajes (puedes combinar dos opciones tomando la mitad de cada una)',
+        '1 lata de mejillones al natural o 1 lata escurrida (56 g) de atún al natural o 100 g almejas salvajes o 75 g ostras o 75 g vieiras o 120 g gambas salvajes (puedes combinar dos opciones tomando la mitad de cada una)',
         fruta,
       ],
       2: [
@@ -466,7 +666,7 @@ function render4Meals(data, numeroOpcionesPlan) {
         'Café al gusto',
         '500 ml Leche fresca desnatada',
         '12 g Colágeno bovino hidrolizado',
-        '60 g Hígado de vaca o hígado de cordero',
+        '60 g Hígado de vaca o 60 g Hígado de cordero',
         fruta,
       ],
       4: [
@@ -508,25 +708,25 @@ function render4Meals(data, numeroOpcionesPlan) {
       1: [
         '200 g Yogur entero de leche de cabra',
         `${fruitOrMiel} (puedes combinar dos opciones tomando la mitad de cada una)`,
-        '10 g Chocolate 80–100% o 7 g mantequilla',
+        '10 g Chocolate 80–100% o 7 g Mantequilla',
         '10 g Colágeno bovino hidrolizado',
         'Canela ceylán al gusto',
-        '1 zanahoria cruda pelada',
-        '3 g Aceite de coco o 3 g aceite de oliva virgen extra prensado en frío',
+        '1 Zanahoria cruda pelada',
+        '3 g Aceite de coco o 3 g Aceite de oliva virgen extra prensado en frío',
       ],
       2: [
         '125 g Helado “Haggen Dazs”',
         '10 g Colágeno bovino hidrolizado',
-        '1 zanahoria cruda pelada',
-        '3 g Aceite de coco o 3 g aceite de oliva virgen extra prensado en frío',
+        '1 Zanahoria cruda pelada',
+        '3 g Aceite de coco o 3 g Aceite de oliva virgen extra prensado en frío',
       ],
       3: [
         '25 g Queso de leche cruda',
         `${fruitOrMiel} (puedes combinar dos opciones tomando la mitad de cada una)`,
-        '10 g Chocolate 80–100% o 7 g mantequilla',
-        '100 ml Zumo de frutas a elegir + 10 g colágeno bovino hidrolizado',
-        '1 zanahoria cruda pelada',
-        '3 g Aceite de coco o 3 g aceite de oliva virgen extra prensado en frío',
+        '10 g Chocolate 80–100% o 7 g Mantequilla',
+        '100 ml Zumo de frutas a elegir + 10 g Colágeno bovino hidrolizado',
+        '1 Zanahoria cruda pelada',
+        '3 g Aceite de coco o 3 g Aceite de oliva virgen extra prensado en frío',
       ],
     }
 
@@ -579,20 +779,6 @@ function buildHtml(data) {
     duranteDiaTexto: [],
   }
 
-  const repartoRows = (data.reparto || [])
-    .map(
-      (meal) => `
-        <tr>
-          <td>${escapeHtml(meal.nombre)}</td>
-          <td>${meal.baseKcal} kcal</td>
-          <td>${meal.kcalObjetivo} kcal</td>
-          <td>${meal.deltaKcal > 0 ? '+' : ''}${meal.deltaKcal} kcal</td>
-          <td>${meal.deltaCarbs > 0 ? '+' : ''}${meal.deltaCarbs} g</td>
-        </tr>
-      `
-    )
-    .join('')
-
   const mealsHtml =
     data.comidasDia === 4
       ? render4Meals(data, numeroOpcionesPlan)
@@ -604,152 +790,392 @@ function buildHtml(data) {
     <head>
       <meta charset="UTF-8" />
       <style>
-        @page { size: A4; margin: 14mm; }
-        * { box-sizing: border-box; }
+        @page {
+          size: A4;
+          margin: 12mm;
+        }
+
+        * {
+          box-sizing: border-box;
+        }
 
         body {
           margin: 0;
           font-family: Arial, sans-serif;
-          color: #222;
-          background: #fff;
-          line-height: 1.45;
-          font-size: 12px;
+          color: #2f241d;
+          background: #f8f2eb;
+          line-height: 1.42;
+          font-size: 11px;
           -webkit-print-color-adjust: exact;
           print-color-adjust: exact;
         }
 
-        .title {
-          font-size: 24px;
+        .page {
+          width: 100%;
+        }
+
+        .cover {
+          min-height: 245mm;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          page-break-after: always;
+          background: linear-gradient(180deg, #f8f2eb 0%, #efe3d7 100%);
+          border: 1px solid #dfc7b5;
+          border-radius: 26px;
+          padding: 28mm 18mm;
+        }
+
+        .cover-brand-wrap {
+          text-align: center;
+          margin-bottom: 26px;
+        }
+
+        .cover-brand {
+          font-size: 34px;
+          font-weight: 800;
+          letter-spacing: 2px;
+          color: #7b5a43;
+        }
+
+        .cover-brand-line {
+          width: 120px;
+          height: 4px;
+          background: #b08968;
+          border-radius: 999px;
+          margin: 10px auto 0;
+        }
+
+        .cover-panel {
+          background: rgba(255, 250, 245, 0.88);
+          border: 1px solid #e2cdbd;
+          border-radius: 24px;
+          padding: 20px;
+          box-shadow: 0 8px 24px rgba(123, 90, 67, 0.08);
+        }
+
+        .cover-kicker {
+          font-size: 11px;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          color: #8a6954;
           font-weight: 700;
-          margin-bottom: 6px;
+          margin-bottom: 8px;
         }
 
-        .subtitle {
+        .cover-title {
+          font-size: 28px;
+          line-height: 1.15;
+          margin: 0 0 10px;
+          color: #4d3527;
+        }
+
+        .cover-text {
+          margin: 0 0 18px;
           font-size: 13px;
-          color: #666;
-          margin-bottom: 18px;
+          color: #6d5646;
         }
 
-        .card {
-          border: 1px solid #ddd;
-          border-radius: 12px;
+        .cover-client {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+          margin-bottom: 16px;
+        }
+
+        .cover-client-item {
+          background: #f4e7db;
+          border: 1px solid #e2cdbd;
+          border-radius: 14px;
           padding: 12px;
+        }
+
+        .cover-label {
+          font-size: 10px;
+          text-transform: uppercase;
+          letter-spacing: 0.6px;
+          color: #8b6c57;
+          font-weight: 700;
+          margin-bottom: 4px;
+        }
+
+        .cover-value {
+          font-size: 13px;
+          font-weight: 700;
+          color: #34271f;
+        }
+
+        .cover-badges {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+
+        .cover-badge {
+          display: inline-block;
+          background: #7b5a43;
+          color: #fff;
+          border-radius: 999px;
+          padding: 7px 11px;
+          font-size: 10px;
+          font-weight: 700;
+        }
+
+        .cover-footer {
+          text-align: center;
+          margin-top: 20px;
+          font-size: 11px;
+          color: #7f6553;
+          font-weight: 600;
+        }
+
+        .brand-wrap {
+          text-align: center;
           margin-bottom: 14px;
         }
 
-        .section-title {
-          font-size: 17px;
-          font-weight: 700;
-          margin: 0 0 10px;
+        .brand {
+          font-size: 26px;
+          font-weight: 800;
+          letter-spacing: 1px;
+          color: #7b5a43;
+          margin-bottom: 4px;
         }
 
-        .metric {
-          font-size: 13px;
+        .brand-line {
+          width: 110px;
+          height: 3px;
+          background: #b08968;
+          margin: 0 auto;
+          border-radius: 999px;
+        }
+
+        .hero {
+          background: linear-gradient(135deg, #ead9c8 0%, #f5ece3 100%);
+          border: 1px solid #dcc4af;
+          border-radius: 18px;
+          padding: 15px;
+          margin-bottom: 14px;
+        }
+
+        .title {
+          font-size: 22px;
+          font-weight: 700;
           margin-bottom: 6px;
+          color: #4f3728;
+        }
+
+        .subtitle {
+          font-size: 12px;
+          color: #6f5644;
+          margin: 0;
+        }
+
+        .card {
+          background: #fffaf5;
+          border: 1px solid #e2d1c2;
+          border-radius: 16px;
+          padding: 14px;
+          margin-bottom: 14px;
+          box-shadow: 0 2px 8px rgba(123, 90, 67, 0.05);
+        }
+
+        .section-title {
+          font-size: 16px;
+          font-weight: 700;
+          margin: 0 0 12px;
+          color: #6e4d39;
+        }
+
+        .profile-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+        }
+
+        .profile-item {
+          background: #f4e8dc;
+          border: 1px solid #e2cdbb;
+          border-radius: 12px;
+          padding: 10px 12px;
+        }
+
+        .profile-label {
+          font-size: 10px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.4px;
+          color: #8a6a55;
+          margin-bottom: 4px;
+        }
+
+        .profile-value {
+          font-size: 12px;
+          color: #2f241d;
+          font-weight: 600;
+        }
+
+        .profile-summary {
+          margin-top: 12px;
+          background: #f8efe7;
+          border: 1px solid #ead7c8;
+          border-radius: 12px;
+          padding: 10px 12px;
+          color: #5b4333;
+        }
+
+        .notes-list {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .note-item {
+          display: flex;
+          gap: 8px;
+          align-items: flex-start;
+          background: #f7ede4;
+          border: 1px solid #e7d7ca;
+          border-radius: 12px;
+          padding: 9px 10px;
+        }
+
+        .note-dot {
+          width: 8px;
+          height: 8px;
+          min-width: 8px;
+          border-radius: 50%;
+          background: #b08968;
+          margin-top: 5px;
         }
 
         .meal-box {
-          border: 1px solid #e5e5e5;
-          border-radius: 12px;
-          padding: 12px;
+          background: #fffaf5;
+          border: 1px solid #deccb9;
+          border-radius: 16px;
+          padding: 14px;
           margin-bottom: 16px;
           page-break-inside: avoid;
         }
 
         .meal-title {
-          font-size: 16px;
-          font-weight: 700;
+          font-size: 17px;
+          font-weight: 800;
+          color: #6b4b36;
           margin-bottom: 8px;
         }
 
         .meal-subtext {
           font-size: 11px;
-          color: #555;
-          margin-bottom: 6px;
+          color: #725947;
+          background: #f4e7db;
+          border: 1px solid #e3cfbe;
+          border-radius: 10px;
+          padding: 8px 10px;
+          margin-bottom: 7px;
         }
 
         .options-grid {
           display: grid;
-          grid-template-columns: 1fr;
-          gap: 10px;
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+          margin-top: 10px;
         }
 
         .option-card {
-          border: 1px solid #e7e7e7;
-          border-radius: 10px;
-          padding: 10px;
+          background: #ffffff;
+          border: 1px solid #e5d4c4;
+          border-radius: 14px;
+          padding: 12px;
           page-break-inside: avoid;
+          break-inside: avoid;
+          min-height: 100%;
         }
 
         .option-title {
-          font-size: 13px;
+          display: inline-block;
+          background: #7b5a43;
+          color: #fff;
+          border-radius: 999px;
+          padding: 6px 12px;
+          font-size: 12px;
           font-weight: 700;
-          margin-bottom: 6px;
+          margin-bottom: 10px;
         }
 
-        table {
+        .option-lines {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .food-line {
+          display: block;
+        }
+
+        .food-pill {
+          display: block;
           width: 100%;
-          border-collapse: collapse;
-          margin-top: 8px;
-        }
-
-        th, td {
-          border: 1px solid #ddd;
-          padding: 7px;
-          text-align: left;
+          background: #f6eee6;
+          border: 1px solid #ddc7b5;
+          color: #2f241d;
+          border-radius: 14px;
+          padding: 9px 11px;
           font-size: 11px;
+          line-height: 1.4;
         }
 
-        th { background: #f5f5f5; }
-
-        ul {
-          margin: 8px 0 0;
-          padding-left: 18px;
+        .choice-stack {
+          background: #fbf6f1;
+          border: 1px dashed #dcc2af;
+          border-radius: 14px;
+          padding: 8px;
         }
 
-        li { margin-bottom: 5px; }
+        .choice-pill {
+          background: #fff8f2;
+        }
 
-        .small-note {
-          color: #666;
+        .choice-item + .choice-item {
+          margin-top: 6px;
+        }
+
+        .choice-separator {
+          text-align: center;
           font-size: 11px;
-          margin-top: 8px;
+          font-weight: 700;
+          color: #8b6a55;
+          margin: 5px 0 2px;
+        }
+
+        .footer-space {
+          height: 6px;
         }
       </style>
     </head>
     <body>
-      <div class="title">${escapeHtml(data.tituloPlan || 'Plan nutricional personalizado')}</div>
-      <div class="subtitle">Se respetan los alimentos de cada opción y solo se ajustan las fuentes de hidratos</div>
+      ${renderCover(data, numeroOpcionesPlan)}
 
-      <div class="card">
-        <div class="section-title">Resumen</div>
-        <div class="metric"><strong>Calorías objetivo:</strong> ${data.caloriasObjetivo || 0} kcal</div>
-        <div class="metric"><strong>Número de comidas:</strong> ${data.comidasDia || 3}</div>
-        <div class="metric"><strong>Opciones incluidas por comida:</strong> ${numeroOpcionesPlan}</div>
-        <div class="metric">${escapeHtml(data.resumenPlan || '')}</div>
+      <div class="page">
+        <div class="brand-wrap">
+          <div class="brand">DIETA MAKE</div>
+          <div class="brand-line"></div>
+        </div>
+
+        <div class="hero">
+          <div class="title">${escapeHtml(data.tituloPlan || 'Plan nutricional personalizado')}</div>
+          <p class="subtitle">Se respetan los alimentos de cada opción y solo se ajustan las fuentes de hidratos.</p>
+        </div>
+
+        ${renderClientProfile(data, numeroOpcionesPlan)}
+
+        ${renderNotas('Ajustes recomendados para la última comida', ajustesPersonalizados.ultimaComidaTexto)}
+        ${renderNotas('Ajustes recomendados durante el día', ajustesPersonalizados.duranteDiaTexto)}
+
+        ${mealsHtml}
+
+        <div class="footer-space"></div>
       </div>
-
-      ${renderNotas('Ajustes recomendados para la última comida', ajustesPersonalizados.ultimaComidaTexto)}
-      ${renderNotas('Ajustes recomendados durante el día', ajustesPersonalizados.duranteDiaTexto)}
-
-      <div class="card">
-        <div class="section-title">Reparto calórico estimado</div>
-        <table>
-          <thead>
-            <tr>
-              <th>Comida</th>
-              <th>Base</th>
-              <th>Objetivo</th>
-              <th>Ajuste kcal</th>
-              <th>Ajuste carbs</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${repartoRows}
-          </tbody>
-        </table>
-      </div>
-
-      ${mealsHtml}
     </body>
     </html>
   `
