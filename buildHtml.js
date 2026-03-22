@@ -292,11 +292,28 @@ function renderRange(count, renderFn) {
   return Array.from({ length: count }, (_, i) => renderFn(i + 1)).join('')
 }
 
+function renderNotas(title, items) {
+  if (!items || items.length === 0) return ''
+
+  return `
+    <div class="card">
+      <div class="section-title">${escapeHtml(title)}</div>
+      <ul>
+        ${items.map(li).join('')}
+      </ul>
+    </div>
+  `
+}
+
 function buildHtml(data) {
   const comida1 = data.ajustes?.comida1 || {}
   const comida2 = data.ajustes?.comida2 || {}
   const comida3Normal = data.ajustes?.comida3Normal || {}
   const comida3AvenaFruta = data.ajustes?.comida3AvenaFruta || {}
+  const ajustesPersonalizados = data.ajustesPersonalizados || {
+    ultimaComidaTexto: [],
+    duranteDiaTexto: [],
+  }
 
   const numeroOpcionesPlan =
     data.numeroOpcionesPlan === 5 || data.numeroOpcionesPlan === 7 ? data.numeroOpcionesPlan : 1
@@ -455,6 +472,9 @@ function buildHtml(data) {
         <div class="metric"><strong>Reparto base:</strong> Comida 1 → 33% | Comida 2 → 24% | Comida 3 → 43%</div>
         <div class="metric">${escapeHtml(data.resumenPlan || '')}</div>
       </div>
+
+      ${renderNotas('Ajustes recomendados para la última comida', ajustesPersonalizados.ultimaComidaTexto)}
+      ${renderNotas('Ajustes recomendados durante el día', ajustesPersonalizados.duranteDiaTexto)}
 
       <div class="card">
         <div class="section-title">Reparto calórico estimado</div>
