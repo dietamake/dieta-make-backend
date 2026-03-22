@@ -1,18 +1,54 @@
+function formatFruitLine(frutas, frutaTipo, frutaUnidades) {
+  const frutaTexto = frutas[frutaTipo] || frutas.manzana || '1 manzana'
+
+  if (!frutaUnidades || frutaUnidades <= 0) return 'Sin fruta'
+  return `${frutaUnidades} × ${frutaTexto}`
+}
+
+function formatCenaCarbSource(carbSource, gramos) {
+  if (carbSource === 'patata') return `${gramos} g patata cocida`
+  if (carbSource === 'boniato') return `${gramos} g boniato cocido`
+  if (carbSource === 'arroz') return `${gramos} g arroz blanco cocido`
+  return `${gramos} g patata cocida`
+}
+
+function formatSweetSource(frutas, sweetSource, frutaTipo, frutaUnidades, mielGramos) {
+  if (sweetSource === 'miel') {
+    if (!mielGramos || mielGramos <= 0) return 'Sin miel'
+    return `${mielGramos} g miel cruda`
+  }
+
+  return formatFruitLine(frutas, frutaTipo, frutaUnidades)
+}
+
 function buildHtml(data) {
-  const comidasHtml = (data.comidasPlan || [])
+  const frutas = data.FRUTAS || {
+    caqui: '1 caqui',
+    manzana: '1 manzana',
+    naranja: '1 naranja grande',
+    pera: '1 pera',
+    platano: '1 plátano',
+    kiwi: '2 kiwis',
+    mandarinas: '3 mandarinas',
+  }
+
+  const comida1 = data.ajustes?.comida1 || {}
+  const comida2 = data.ajustes?.comida2 || {}
+  const comida3 = data.ajustes?.comida3 || {}
+
+  const repartoRows = (data.reparto || [])
     .map(
-      (item) => `
-        <li class="meal-item">
-          <span class="meal-dot"></span>
-          <span>${item}</span>
-        </li>
+      (meal) => `
+        <tr>
+          <td>${meal.nombre}</td>
+          <td>${meal.baseKcal} kcal</td>
+          <td>${meal.kcalObjetivo} kcal</td>
+          <td>${meal.deltaKcal > 0 ? '+' : ''}${meal.deltaKcal} kcal</td>
+          <td>${meal.deltaCarbs > 0 ? '+' : ''}${meal.deltaCarbs} g</td>
+        </tr>
       `
     )
     .join('')
-
-  const objetivo = Array.isArray(data.objetivo)
-    ? data.objetivo.join(', ')
-    : data.objetivo || ''
 
   return `
     <!doctype html>
@@ -22,7 +58,7 @@ function buildHtml(data) {
       <style>
         @page {
           size: A4;
-          margin: 0;
+          margin: 18mm;
         }
 
         * {
@@ -31,261 +67,165 @@ function buildHtml(data) {
 
         body {
           margin: 0;
-          font-family: 'Manrope', Arial, sans-serif;
-          background: #f6f1eb;
-          color: #2b2b2b;
+          font-family: Arial, sans-serif;
+          color: #222;
+          background: #fff;
+          line-height: 1.45;
+          font-size: 13px;
           -webkit-print-color-adjust: exact;
           print-color-adjust: exact;
         }
 
-        .page {
-          width: 210mm;
-          min-height: 297mm;
-          padding: 22mm 18mm;
-          background: #f6f1eb;
-        }
-
-        .header {
-          margin-bottom: 22px;
-        }
-
-        .brand {
-          font-size: 34px;
+        .title {
+          font-size: 26px;
           font-weight: 700;
-          letter-spacing: -0.5px;
-          color: #1f1f1f;
           margin-bottom: 6px;
         }
 
         .subtitle {
-          font-size: 15px;
-          color: #6f6a64;
-          line-height: 1.5;
-          max-width: 460px;
-        }
-
-        .hero {
-          background: linear-gradient(135deg, #d9c2a6 0%, #efe4d7 100%);
-          border-radius: 22px;
-          padding: 24px;
-          margin-bottom: 18px;
-        }
-
-        .hero-title {
-          font-size: 26px;
-          font-weight: 700;
-          margin: 0 0 8px;
-          color: #1f1f1f;
-        }
-
-        .hero-text {
-          font-size: 15px;
-          color: #4d463f;
-          margin: 0;
-          line-height: 1.6;
-        }
-
-        .grid {
-          display: table;
-          width: 100%;
-          border-spacing: 0 14px;
+          font-size: 14px;
+          color: #666;
+          margin-bottom: 20px;
         }
 
         .card {
-          background: #ffffff;
-          border-radius: 18px;
-          padding: 18px;
+          border: 1px solid #ddd;
+          border-radius: 12px;
+          padding: 14px;
           margin-bottom: 16px;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.04);
         }
 
         .section-title {
           font-size: 18px;
           font-weight: 700;
-          margin: 0 0 14px;
-          color: #1f1f1f;
+          margin: 0 0 10px;
+        }
+
+        .metric {
+          font-size: 15px;
+          margin-bottom: 6px;
         }
 
         .muted {
-          color: #6f6a64;
-          font-size: 14px;
-          line-height: 1.6;
+          color: #666;
         }
 
-        .info-table {
+        .meal-box {
+          border: 1px solid #e5e5e5;
+          border-radius: 12px;
+          padding: 14px;
+          margin-bottom: 14px;
+        }
+
+        .meal-title {
+          font-size: 16px;
+          font-weight: 700;
+          margin-bottom: 8px;
+        }
+
+        .food-line {
+          margin-bottom: 6px;
+        }
+
+        table {
           width: 100%;
           border-collapse: collapse;
+          margin-top: 10px;
         }
 
-        .info-table td {
-          padding: 8px 0;
-          vertical-align: top;
-          font-size: 14px;
-          border-bottom: 1px solid #f0ebe5;
+        th, td {
+          border: 1px solid #ddd;
+          padding: 8px;
+          text-align: left;
+          font-size: 12px;
         }
 
-        .info-label {
-          width: 42%;
-          color: #6b645d;
-          font-weight: 700;
+        th {
+          background: #f5f5f5;
         }
 
-        .info-value {
-          color: #222;
-        }
-
-        .meal-list {
-          list-style: none;
-          padding: 0;
-          margin: 0;
-        }
-
-        .meal-item {
-          display: table;
-          width: 100%;
-          margin-bottom: 12px;
-          padding: 12px 14px;
-          background: #faf7f3;
-          border-radius: 12px;
-        }
-
-        .meal-dot {
-          display: inline-block;
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background: #b08968;
-          margin-right: 10px;
-          vertical-align: middle;
-        }
-
-        .tips-list {
-          margin: 0;
+        ul {
+          margin: 8px 0 0;
           padding-left: 18px;
         }
 
-        .tips-list li {
-          margin-bottom: 8px;
-          color: #3c3a37;
-        }
-
-        .footer {
-          margin-top: 24px;
-          padding-top: 12px;
-          text-align: center;
-          font-size: 12px;
-          color: #8a8178;
-        }
-
-        .pill {
-          display: inline-block;
-          padding: 7px 12px;
-          border-radius: 999px;
-          background: #efe7de;
-          color: #5f564d;
-          font-size: 12px;
-          font-weight: 700;
-          margin-top: 10px;
+        li {
+          margin-bottom: 6px;
         }
       </style>
     </head>
     <body>
-      <div class="page">
-        <div class="header">
-          <div class="brand">Dieta Make</div>
-          <div class="subtitle">
-            Plan nutricional personalizado diseñado según tus respuestas, tu objetivo y tu estilo de vida.
-          </div>
-        </div>
+      <div class="title">${data.tituloPlan || 'Plan nutricional personalizado'}</div>
+      <div class="subtitle">Dieta adaptada a las calorías calculadas del formulario</div>
 
-        <div class="hero">
-          <h1 class="hero-title">${data.tituloPlan || 'Plan nutricional personalizado'}</h1>
-          <p class="hero-text">
-            Cliente: <strong>${data.nombre || 'Cliente'}</strong><br />
-            Objetivo principal: <strong>${objetivo || 'No indicado'}</strong><br />
-            Plan contratado: <strong>${data.plan || 'No indicado'}</strong>
-          </p>
-          <div class="pill">PDF personalizado</div>
-        </div>
+      <div class="card">
+        <div class="section-title">Resumen</div>
+        <div class="metric"><strong>Calorías objetivo:</strong> ${data.caloriasObjetivo || 0} kcal</div>
+        <div class="metric"><strong>Número de comidas:</strong> ${data.comidasDia || 3}</div>
+        <div class="metric muted">${data.resumenPlan || ''}</div>
+      </div>
 
-        <div class="card">
-          <h2 class="section-title">Resumen del perfil</h2>
-          <table class="info-table">
+      <div class="card">
+        <div class="section-title">Reparto calórico</div>
+        <table>
+          <thead>
             <tr>
-              <td class="info-label">Email</td>
-              <td class="info-value">${data.email || '-'}</td>
+              <th>Comida</th>
+              <th>Base</th>
+              <th>Objetivo</th>
+              <th>Ajuste kcal</th>
+              <th>Ajuste carbs</th>
             </tr>
-            <tr>
-              <td class="info-label">Sexo</td>
-              <td class="info-value">${data.sexo || '-'}</td>
-            </tr>
-            <tr>
-              <td class="info-label">Edad</td>
-              <td class="info-value">${data.edad || '-'} ${data.edad ? 'años' : ''}</td>
-            </tr>
-            <tr>
-              <td class="info-label">Altura</td>
-              <td class="info-value">${data.altura || '-'} ${data.altura ? 'cm' : ''}</td>
-            </tr>
-            <tr>
-              <td class="info-label">Peso</td>
-              <td class="info-value">${data.peso || '-'} ${data.peso ? 'kg' : ''}</td>
-            </tr>
-            <tr>
-              <td class="info-label">Actividad diaria</td>
-              <td class="info-value">${data.actividad || '-'}</td>
-            </tr>
-            <tr>
-              <td class="info-label">Horas de sueño</td>
-              <td class="info-value">${data.sueno || '-'}</td>
-            </tr>
-            <tr>
-              <td class="info-label">Grasa abdominal</td>
-              <td class="info-value">${data.grasa_abdominal || '-'}</td>
-            </tr>
-            <tr>
-              <td class="info-label">Primera comida</td>
-              <td class="info-value">${data.primera_comida || '-'}</td>
-            </tr>
-            <tr>
-              <td class="info-label">Frecuencia de baño</td>
-              <td class="info-value">${data.bano || '-'}</td>
-            </tr>
-            <tr>
-              <td class="info-label">Despertares nocturnos</td>
-              <td class="info-value">${data.despertares_noche || '-'}</td>
-            </tr>
-            <tr>
-              <td class="info-label">Comidas al día</td>
-              <td class="info-value">${data.comidasDia || '-'}</td>
-            </tr>
-          </table>
-        </div>
+          </thead>
+          <tbody>
+            ${repartoRows}
+          </tbody>
+        </table>
+      </div>
 
-        <div class="card">
-          <h2 class="section-title">Plan de comidas</h2>
-          <p class="muted" style="margin-bottom:14px;">
-            Distribución sugerida en función de las respuestas del cliente y del número de comidas seleccionadas.
-          </p>
-          <ul class="meal-list">
-            ${comidasHtml || '<li class="meal-item"><span>No hay comidas definidas todavía.</span></li>'}
-          </ul>
-        </div>
+      <div class="section-title">Plan de 3 comidas</div>
 
-        <div class="card">
-          <h2 class="section-title">Recomendaciones generales</h2>
-          <ul class="tips-list">
-            <li>Prioriza alimentos frescos y fuentes de proteína en cada comida.</li>
-            <li>Mantén una hidratación estable durante el día.</li>
-            <li>Intenta mantener horarios de comida lo más regulares posible.</li>
-            <li>Ajusta cantidades según hambre, saciedad y evolución semanal.</li>
-            <li>La constancia durante varias semanas vale más que hacerlo perfecto dos días.</li>
-          </ul>
-        </div>
+      <div class="meal-box">
+        <div class="meal-title">Comida 1</div>
+        <div class="food-line">Café al gusto</div>
+        <div class="food-line">+ proteína y grasas según la opción elegida, sin cambios</div>
+        <div class="food-line">+ ${formatFruitLine(frutas, comida1.frutaTipo || 'manzana', comida1.frutaUnidades ?? 1)}</div>
+        <div class="food-line">+ ${comida1.avenaGramos || 50} g copos de avena</div>
+      </div>
 
-        <div class="footer">
-          Dieta Make · Plan generado de forma personalizada
-        </div>
+      <div class="meal-box">
+        <div class="meal-title">Comida 2</div>
+        <div class="food-line">+ proteína y grasas según la opción elegida, sin cambios</div>
+        <div class="food-line">+ ${formatFruitLine(frutas, comida2.frutaTipo || 'manzana', comida2.frutaUnidades ?? 1)}</div>
+        <div class="food-line">+ ${comida2.panGramos ?? 50} g pan de masa madre</div>
+        <div class="food-line">+ aceite de oliva y tomate al gusto, sin cambios</div>
+      </div>
+
+      <div class="meal-box">
+        <div class="meal-title">Comida 3</div>
+        <div class="food-line">5 min antes de empezar a comer: vinagre de sidra de manzana en pastilla (500 mg)</div>
+        <div class="food-line">Al acabar de comer: bisglicinato de magnesio (2 g)</div>
+        <div class="food-line">+ proteína y grasas según la opción elegida, sin cambios</div>
+        <div class="food-line">+ ${formatCenaCarbSource(comida3.carbSource || 'patata', comida3.carbPrincipalGramos || 370)}</div>
+        <div class="food-line">+ ${formatSweetSource(
+          frutas,
+          comida3.sweetSource || 'fruta',
+          comida3.frutaTipo || 'manzana',
+          comida3.frutaUnidades ?? 1,
+          comida3.mielGramos ?? 35
+        )}</div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">Reglas aplicadas</div>
+        <ul>
+          <li>Las proteínas y las grasas se mantienen fijas.</li>
+          <li>Solo se ajustan las líneas de hidratos para acercarse a las calorías objetivo.</li>
+          <li>La fruta puede bajar a 0 unidades si hace falta.</li>
+          <li>El pan puede bajar a 0 g si hace falta.</li>
+          <li>La miel puede bajar a 0 g si hace falta.</li>
+          <li>El arroz está calculado en cocido.</li>
+        </ul>
       </div>
     </body>
     </html>
