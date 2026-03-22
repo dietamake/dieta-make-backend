@@ -11,18 +11,6 @@ const PLAN_3_BASE = {
   ],
 }
 
-const FRUTAS = {
-  caqui: '1 Caqui',
-  manzana: '1 Manzana',
-  naranja: '1 Naranja grande',
-  pera: '1 Pera',
-  platano: '1 Plátano',
-  kiwi: '2 Kiwis',
-  mandarinas: '3 Mandarinas',
-}
-
-const FRUTA_DEFAULT = 'manzana'
-
 const CARB_DB = {
   fruta_unidad: { kcal: 100, carbs: 25 },
   miel_cruda: { kcalPerGram: 3.04, carbsPerGram: 0.82 },
@@ -75,7 +63,9 @@ function normalizeActividad(value) {
   if (v.includes('sedent')) return 'sedentario'
   if (v.includes('1-3') || v.includes('1–3') || v.includes('liger')) return 'ligero'
   if (v.includes('3-5') || v.includes('3–5') || v.includes('moderad') || v.includes('media')) return 'moderado'
-  if (v.includes('6-7') || v.includes('6–7') || v.includes('alto') || v.includes('trabajo físico') || v.includes('trabajo fisico')) return 'alto'
+  if (v.includes('6-7') || v.includes('6–7') || v.includes('alto') || v.includes('trabajo físico') || v.includes('trabajo fisico')) {
+    return 'alto'
+  }
 
   if (['sedentario', 'ligero', 'moderado', 'alto'].includes(v)) return v
   return 'sedentario'
@@ -107,31 +97,11 @@ function normalizeSueno(value) {
   return 7
 }
 
-function normalizeFruit(value) {
-  const v = String(value || '').trim().toLowerCase()
-
-  if (v.includes('caqui')) return 'caqui'
-  if (v.includes('manzana')) return 'manzana'
-  if (v.includes('naranja')) return 'naranja'
-  if (v.includes('pera')) return 'pera'
-  if (v.includes('plátano') || v.includes('platano')) return 'platano'
-  if (v.includes('kiwi')) return 'kiwi'
-  if (v.includes('mandarina')) return 'mandarinas'
-
-  return FRUTA_DEFAULT
-}
-
-function normalizeCarbSource(value) {
-  const v = String(value || '').trim().toLowerCase()
-  if (v.includes('boniato')) return 'boniato'
-  if (v.includes('arroz')) return 'arroz'
-  return 'patata'
-}
-
-function normalizeSweetSource(value) {
-  const v = String(value || '').trim().toLowerCase()
-  if (v.includes('miel')) return 'miel'
-  return 'fruta'
+function getNumeroOpcionesPlan(plan) {
+  const v = String(plan || '').trim().toLowerCase()
+  if (v === 'avanzado_7_opciones') return 7
+  if (v === 'recomendado_5_opciones') return 5
+  return 1
 }
 
 function calcularCaloriasObjetivo(data) {
@@ -209,7 +179,7 @@ function getMinCarbGrams(carbSource) {
   return 120
 }
 
-function ajustarComida1(deltaKcal, frutaTipo = FRUTA_DEFAULT) {
+function ajustarComida1(deltaKcal) {
   let deltaRestante = deltaKcal
 
   const avenaGramos = ajustarGramos(
@@ -224,16 +194,20 @@ function ajustarComida1(deltaKcal, frutaTipo = FRUTA_DEFAULT) {
   const kcalAvenaBase = 50 * CARB_DB.copos_avena.kcalPerGram
   deltaRestante -= (kcalAvenaNueva - kcalAvenaBase)
 
-  const frutaUnidades = ajustarFrutaUnidades(1, deltaRestante, CARB_DB.fruta_unidad.kcal, 0)
+  const frutaUnidades = ajustarFrutaUnidades(
+    1,
+    deltaRestante,
+    CARB_DB.fruta_unidad.kcal,
+    0
+  )
 
   return {
-    frutaTipo,
     frutaUnidades,
     avenaGramos,
   }
 }
 
-function ajustarComida2(deltaKcal, frutaTipo = FRUTA_DEFAULT) {
+function ajustarComida2(deltaKcal) {
   let deltaRestante = deltaKcal
 
   const panGramos = ajustarGramos(
@@ -248,16 +222,20 @@ function ajustarComida2(deltaKcal, frutaTipo = FRUTA_DEFAULT) {
   const kcalPanBase = 50 * CARB_DB.pan_masa_madre.kcalPerGram
   deltaRestante -= (kcalPanNueva - kcalPanBase)
 
-  const frutaUnidades = ajustarFrutaUnidades(1, deltaRestante, CARB_DB.fruta_unidad.kcal, 0)
+  const frutaUnidades = ajustarFrutaUnidades(
+    1,
+    deltaRestante,
+    CARB_DB.fruta_unidad.kcal,
+    0
+  )
 
   return {
-    frutaTipo,
     frutaUnidades,
     panGramos,
   }
 }
 
-function ajustarComida3Normal(deltaKcal, carbSource = 'patata', frutaTipo = FRUTA_DEFAULT) {
+function ajustarComida3Normal(deltaKcal, carbSource = 'patata') {
   let deltaRestante = deltaKcal
 
   const carbDb = getCarbSourceDb(carbSource)
@@ -276,13 +254,17 @@ function ajustarComida3Normal(deltaKcal, carbSource = 'patata', frutaTipo = FRUT
   const kcalPrincipalBase = baseCarbGrams * carbDb.kcalPerGram
   deltaRestante -= (kcalPrincipalNueva - kcalPrincipalBase)
 
-  const frutaUnidades = ajustarFrutaUnidades(1, deltaRestante, CARB_DB.fruta_unidad.kcal, 0)
+  const frutaUnidades = ajustarFrutaUnidades(
+    1,
+    deltaRestante,
+    CARB_DB.fruta_unidad.kcal,
+    0
+  )
 
   return {
     mode: 'normal',
     carbSource,
     carbPrincipalGramos,
-    frutaTipo,
     frutaUnidades,
     mielGramos: null,
     avenaGramos: null,
@@ -290,7 +272,7 @@ function ajustarComida3Normal(deltaKcal, carbSource = 'patata', frutaTipo = FRUT
   }
 }
 
-function ajustarComida3Avena(deltaKcal, sweetSource = 'fruta', frutaTipo = FRUTA_DEFAULT) {
+function ajustarComida3Avena(deltaKcal, sweetSource = 'fruta') {
   let deltaRestante = deltaKcal
 
   const avenaGramos = ajustarGramos(
@@ -309,16 +291,26 @@ function ajustarComida3Avena(deltaKcal, sweetSource = 'fruta', frutaTipo = FRUTA
   let mielGramos = null
 
   if (sweetSource === 'miel') {
-    mielGramos = ajustarGramos(35, deltaRestante, CARB_DB.miel_cruda.kcalPerGram, 5, 0)
+    mielGramos = ajustarGramos(
+      35,
+      deltaRestante,
+      CARB_DB.miel_cruda.kcalPerGram,
+      5,
+      0
+    )
   } else {
-    frutaUnidades = ajustarFrutaUnidades(1, deltaRestante, CARB_DB.fruta_unidad.kcal, 0)
+    frutaUnidades = ajustarFrutaUnidades(
+      1,
+      deltaRestante,
+      CARB_DB.fruta_unidad.kcal,
+      0
+    )
   }
 
   return {
     mode: 'avena',
     carbSource: null,
     carbPrincipalGramos: null,
-    frutaTipo,
     frutaUnidades,
     mielGramos,
     avenaGramos,
@@ -326,45 +318,45 @@ function ajustarComida3Avena(deltaKcal, sweetSource = 'fruta', frutaTipo = FRUTA
   }
 }
 
-function ajustarComida3(deltaKcal, meal3Option, preferencias = {}) {
-  const frutaTipo = preferencias.frutaTipo || FRUTA_DEFAULT
-  const carbSourceCena = preferencias.carbSourceCena || 'patata'
-  const sweetSourceCena = preferencias.sweetSourceCena || 'fruta'
-
-  if (meal3Option === 4 || meal3Option === 7) {
-    return ajustarComida3Avena(deltaKcal, sweetSourceCena, frutaTipo)
-  }
-
-  return ajustarComida3Normal(deltaKcal, carbSourceCena, frutaTipo)
-}
-
-function generarPlan3Comidas(caloriasObjetivo, preferencias = {}) {
+function generarPlan3Comidas(caloriasObjetivo) {
   const reparto = repartirCaloriasPorComida(caloriasObjetivo, PLAN_3_BASE)
 
   return {
     caloriasObjetivo,
     reparto,
     ajustes: {
-      comida1: ajustarComida1(reparto[0].deltaKcal, preferencias.frutaTipo || FRUTA_DEFAULT),
-      comida2: ajustarComida2(reparto[1].deltaKcal, preferencias.frutaTipo || FRUTA_DEFAULT),
-      comida3: ajustarComida3(reparto[2].deltaKcal, preferencias.comida3Opcion || 1, preferencias),
+      comida1: ajustarComida1(reparto[0].deltaKcal),
+      comida2: ajustarComida2(reparto[1].deltaKcal),
+
+      // Para que el HTML pueda enseñar todas las opciones de comida 3 bien:
+      comida3Normal: ajustarComida3Normal(reparto[2].deltaKcal, 'patata'),
+      comida3AvenaFruta: ajustarComida3Avena(reparto[2].deltaKcal, 'fruta'),
+      comida3AvenaMiel: ajustarComida3Avena(reparto[2].deltaKcal, 'miel'),
     },
   }
 }
 
 function getDietPlan(data) {
-  const plan3 = generarPlan3Comidas(data.caloriasObjetivo, {
-    frutaTipo: data.frutaTipo || FRUTA_DEFAULT,
-    carbSourceCena: data.carbSourceCena || 'patata',
-    sweetSourceCena: data.sweetSourceCena || 'fruta',
-    comida3Opcion: data.comida3Opcion || 1,
-  })
+  const comidasDia = Math.min(Math.max(Number(data.comidasDia) || 3, 3), 6)
+
+  if (comidasDia !== 3) {
+    return {
+      tituloPlan: 'Plan nutricional personalizado',
+      caloriasObjetivo: data.caloriasObjetivo,
+      reparto: [],
+      ajustes: {},
+      resumenPlan: 'De momento solo está implementada la dieta de 3 comidas.',
+    }
+  }
+
+  const plan3 = generarPlan3Comidas(data.caloriasObjetivo)
 
   return {
     tituloPlan: 'Plan nutricional personalizado',
     ...plan3,
+    numeroOpcionesPlan: data.numeroOpcionesPlan,
     resumenPlan:
-      'Se respetan las opciones de alimentos tal cual. Solo se modifican las fuentes de hidratos para ajustar la dieta a las calorías calculadas.',
+      'Se respetan los alimentos de cada opción y solo se ajustan las fuentes de hidratos para adaptar la dieta a las calorías calculadas.',
   }
 }
 
@@ -381,13 +373,9 @@ function normalizeLeadData(data) {
     sueno: normalizeSueno(data.sueno),
     sexo: normalizeSexo(data.sexo),
     actividad: normalizeActividad(data.actividad),
-    grasa: normalizeGrasa(data.grasa),
-    frutaTipo: normalizeFruit(data.frutaTipo),
-    carbSourceCena: normalizeCarbSource(data.carbSourceCena),
-    sweetSourceCena: normalizeSweetSource(data.sweetSourceCena),
-    comida1Opcion: toNumber(data.comida1Opcion, 1),
-    comida2Opcion: toNumber(data.comida2Opcion, 1),
-    comida3Opcion: toNumber(data.comida3Opcion, 1),
+    grasa: normalizeGrasa(data.grasa_abdominal),
+    plan: data.plan || '',
+    numeroOpcionesPlan: getNumeroOpcionesPlan(data.plan),
   }
 }
 
@@ -401,7 +389,10 @@ async function generatePdfForLead(formId) {
   if (error) throw error
   if (!data) throw new Error('No se encontró ninguna fila con ese id')
 
-  await supabase.from('leads_dietas').update({ estado_pdf: 'generating' }).eq('id', formId)
+  await supabase
+    .from('leads_dietas')
+    .update({ estado_pdf: 'generating' })
+    .eq('id', formId)
 
   try {
     const normalizedData = normalizeLeadData(data)
@@ -414,7 +405,6 @@ async function generatePdfForLead(formId) {
 
     const html = buildHtml({
       ...normalizedData,
-      FRUTAS,
       caloriasObjetivo,
       ...dietPlan,
     })
@@ -442,7 +432,11 @@ async function generatePdfForLead(formId) {
 
     return filePath
   } catch (err) {
-    await supabase.from('leads_dietas').update({ estado_pdf: 'error' }).eq('id', formId)
+    await supabase
+      .from('leads_dietas')
+      .update({ estado_pdf: 'error' })
+      .eq('id', formId)
+
     console.error('ERROR GENERANDO PDF:', err)
     throw err
   }
