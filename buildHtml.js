@@ -127,10 +127,39 @@ function optionCard(title, lines) {
 function renderNotas(title, items) {
   if (!items || items.length === 0) return ''
   return `
-    <div class="card">
+    <div class="card compact-card">
       <div class="section-title">${escapeHtml(title)}</div>
       <div class="notes-list">
         ${items
+          .map(
+            (item) => `
+              <div class="note-item">
+                <span class="note-dot"></span>
+                <span>${escapeHtml(item)}</span>
+              </div>
+            `
+          )
+          .join('')}
+      </div>
+    </div>
+  `
+}
+
+function renderIndicacionesGenerales(items) {
+  const defaultItems = [
+    'Prioriza la constancia semanal frente a la perfección diaria.',
+    'Mantén horarios de comida lo más regulares posible.',
+    'Ajusta cantidades en función de hambre, saciedad y evolución.',
+    'Hidrátate de forma estable durante todo el día.',
+  ]
+
+  const finalItems = Array.isArray(items) && items.length > 0 ? items : defaultItems
+
+  return `
+    <div class="card compact-card">
+      <div class="section-title">Indicaciones generales</div>
+      <div class="notes-list">
+        ${finalItems
           .map(
             (item) => `
               <div class="note-item">
@@ -169,91 +198,59 @@ function renderCover(data, numeroOpcionesPlan) {
   const plan = data.plan || 'Plan personalizado'
   const fecha = formatFecha(data.fechaGeneracion)
 
-  const metaItems = [
+  const profileItems = [
     ['Cliente', nombre],
-    ['Objetivo', objetivo],
+    ['Objetivo', objetivo || '-'],
     ['Plan', plan],
     ['Fecha', fecha],
+    ['Email', data.email || '-'],
+    ['Sexo', data.sexo || '-'],
+    ['Edad', data.edad ? `${data.edad} años` : '-'],
+    ['Altura', data.altura ? `${data.altura} cm` : '-'],
+    ['Peso', data.peso ? `${data.peso} kg` : '-'],
+    ['Actividad', data.actividad || '-'],
+    ['Sueño', data.sueno || '-'],
+    ['Grasa abdominal', data.grasa_abdominal || '-'],
+    ['Primera comida', data.primera_comida || '-'],
+    ['Baño', data.bano || '-'],
+    ['Despertares', data.despertares_noche || '-'],
     ['Comidas', String(data.comidasDia || 3)],
-    ['Opciones por comida', String(numeroOpcionesPlan)],
-    ['Kcal objetivo', data.caloriasObjetivo ? `${data.caloriasObjetivo}` : '-'],
+    ['Opciones', String(numeroOpcionesPlan)],
+    ['Kcal objetivo', data.caloriasObjetivo ? `${data.caloriasObjetivo} kcal` : '-'],
   ]
 
   return `
     <section class="cover">
-      <div class="cover-inner">
+      <div class="cover-shell">
         <div class="cover-brand">DIETA MAKE</div>
         <div class="cover-brand-line"></div>
 
-        <h1 class="cover-title">${escapeHtml(data.tituloPlan || 'Plan nutricional')}</h1>
+        <div class="cover-plan-name">${escapeHtml(data.tituloPlan || 'Plan nutricional personalizado')}</div>
 
-        <p class="cover-text">
-          Diseñado según el perfil, el objetivo y la estructura de comidas del cliente.
-        </p>
+        <div class="cover-description">
+          Diseñado según tu perfil, tu objetivo y la estructura de comidas seleccionada.
+        </div>
 
-        <div class="cover-meta">
-          ${metaItems
+        <div class="cover-profile-grid">
+          ${profileItems
             .map(
               ([label, value]) => `
-                <div class="cover-meta-row">
-                  <span class="cover-meta-label">${escapeHtml(label)}</span>
-                  <span class="cover-meta-sep">·</span>
-                  <span class="cover-meta-value">${escapeHtml(value)}</span>
+                <div class="cover-profile-item">
+                  <div class="cover-profile-label">${escapeHtml(label)}</div>
+                  <div class="cover-profile-value">${escapeHtml(value)}</div>
                 </div>
               `
             )
             .join('')}
         </div>
 
-        <div class="cover-footer">Guía visual de comidas y opciones</div>
+        ${
+          data.resumenPlan
+            ? `<div class="cover-summary">${escapeHtml(data.resumenPlan)}</div>`
+            : ''
+        }
       </div>
     </section>
-  `
-}
-
-function renderClientProfile(data, numeroOpcionesPlan) {
-  const objetivo = formatObjetivo(data)
-
-  const profileItems = [
-    ['Nombre', data.nombre || '-'],
-    ['Email', data.email || '-'],
-    ['Sexo', data.sexo || '-'],
-    ['Edad', data.edad ? `${data.edad} años` : '-'],
-    ['Altura', data.altura ? `${data.altura} cm` : '-'],
-    ['Peso', data.peso ? `${data.peso} kg` : '-'],
-    ['Objetivo', objetivo || '-'],
-    ['Actividad diaria', data.actividad || '-'],
-    ['Horas de sueño', data.sueno || '-'],
-    ['Grasa abdominal', data.grasa_abdominal || '-'],
-    ['Primera comida', data.primera_comida || '-'],
-    ['Frecuencia de baño', data.bano || '-'],
-    ['Despertares nocturnos', data.despertares_noche || '-'],
-    ['Comidas al día', data.comidasDia || 3],
-    ['Opciones por comida', numeroOpcionesPlan],
-    ['Calorías objetivo', data.caloriasObjetivo ? `${data.caloriasObjetivo} kcal` : '-'],
-  ]
-
-  return `
-    <div class="card">
-      <div class="section-title">Perfil de cliente</div>
-      <div class="profile-grid">
-        ${profileItems
-          .map(
-            ([label, value]) => `
-              <div class="profile-item">
-                <div class="profile-label">${escapeHtml(label)}</div>
-                <div class="profile-value">${escapeHtml(value)}</div>
-              </div>
-            `
-          )
-          .join('')}
-      </div>
-      ${
-        data.resumenPlan
-          ? `<div class="profile-summary">${escapeHtml(data.resumenPlan)}</div>`
-          : ''
-      }
-    </div>
   `
 }
 
@@ -771,6 +768,8 @@ function buildHtml(data) {
     duranteDiaTexto: [],
   }
 
+  const indicacionesGenerales = data.indicacionesGenerales || []
+
   const mealsHtml =
     data.comidasDia === 4
       ? render4Meals(data, numeroOpcionesPlan)
@@ -784,7 +783,7 @@ function buildHtml(data) {
       <style>
         @page {
           size: A4;
-          margin: 12mm;
+          margin: 10mm;
         }
 
         * {
@@ -796,8 +795,8 @@ function buildHtml(data) {
           font-family: Arial, sans-serif;
           color: #2f241d;
           background: #f8f2eb;
-          line-height: 1.42;
-          font-size: 11px;
+          line-height: 1.35;
+          font-size: 10.5px;
           -webkit-print-color-adjust: exact;
           print-color-adjust: exact;
         }
@@ -807,188 +806,135 @@ function buildHtml(data) {
         }
 
         .cover {
-          min-height: 273mm;
+          min-height: 275mm;
           display: flex;
           align-items: center;
           justify-content: center;
-          text-align: center;
-          page-break-after: always;
-          background: #efe3d7;
-          border: 1px solid #dfc7b5;
+          background:
+            radial-gradient(circle at top left, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 30%),
+            linear-gradient(180deg, #f4e9df 0%, #ecdfd2 100%);
+          border: 1px solid #dcc5b2;
           border-radius: 26px;
-          padding: 20mm 16mm;
+          padding: 16mm;
+          page-break-after: always;
         }
 
-        .cover-inner {
+        .cover-shell {
           width: 100%;
-          max-width: 150mm;
-          margin: 0 auto;
+          background: rgba(255, 251, 247, 0.72);
+          border: 1px solid #e2cfbf;
+          border-radius: 22px;
+          padding: 16px;
+          box-shadow: 0 8px 30px rgba(91, 67, 51, 0.08);
         }
 
         .cover-brand {
-          font-size: 48px;
+          text-align: center;
+          font-size: 46px;
           font-weight: 800;
           letter-spacing: 3px;
           color: #7b5a43;
-          margin-bottom: 10px;
+          margin-bottom: 8px;
         }
 
         .cover-brand-line {
-          width: 140px;
+          width: 120px;
           height: 4px;
           background: #b08968;
           border-radius: 999px;
-          margin: 0 auto 24px;
+          margin: 0 auto 18px;
         }
 
-        .cover-title {
-          font-size: 30px;
+        .cover-plan-name {
+          text-align: center;
+          font-size: 24px;
           line-height: 1.15;
-          margin: 0 0 14px;
           color: #4d3527;
-        }
-
-        .cover-text {
-          margin: 0 0 22px;
-          font-size: 14px;
-          color: #6d5646;
-          line-height: 1.6;
-        }
-
-        .cover-meta {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-
-        .cover-meta-row {
-          font-size: 13px;
-          color: #5c4638;
-          line-height: 1.5;
-        }
-
-        .cover-meta-label {
           font-weight: 700;
-          color: #7b5a43;
+          margin-bottom: 10px;
         }
 
-        .cover-meta-sep {
-          margin: 0 6px;
-          color: #a07d63;
-        }
-
-        .cover-meta-value {
-          color: #34271f;
-          font-weight: 600;
-        }
-
-        .cover-footer {
+        .cover-description {
           text-align: center;
-          margin-top: 26px;
-          font-size: 11px;
-          color: #7f6553;
-          font-weight: 600;
+          font-size: 13px;
+          color: #6d5646;
+          line-height: 1.55;
+          margin: 0 auto 16px;
+          max-width: 130mm;
         }
 
-        .brand-wrap {
-          text-align: center;
-          margin-bottom: 14px;
+        .cover-profile-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr;
+          gap: 10px;
         }
 
-        .brand {
-          font-size: 26px;
-          font-weight: 800;
-          letter-spacing: 1px;
-          color: #7b5a43;
+        .cover-profile-item {
+          background: #fbf6f1;
+          border: 1px solid #e1cdbc;
+          border-radius: 14px;
+          padding: 10px;
+          min-height: 58px;
+        }
+
+        .cover-profile-label {
+          font-size: 9px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          color: #8a6a55;
           margin-bottom: 4px;
         }
 
-        .brand-line {
-          width: 110px;
-          height: 3px;
-          background: #b08968;
-          margin: 0 auto;
-          border-radius: 999px;
+        .cover-profile-value {
+          font-size: 11px;
+          color: #2f241d;
+          font-weight: 600;
+          line-height: 1.35;
         }
 
-        .hero {
-          background: linear-gradient(135deg, #ead9c8 0%, #f5ece3 100%);
-          border: 1px solid #dcc4af;
-          border-radius: 18px;
-          padding: 15px;
+        .cover-summary {
+          margin-top: 14px;
+          background: #f7eee6;
+          border: 1px solid #e7d7ca;
+          border-radius: 14px;
+          padding: 10px 12px;
+          color: #5b4333;
+          text-align: center;
+          font-size: 11px;
+          line-height: 1.5;
+        }
+
+        .section-stack {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
           margin-bottom: 14px;
-        }
-
-        .title {
-          font-size: 22px;
-          font-weight: 700;
-          margin-bottom: 6px;
-          color: #4f3728;
-        }
-
-        .subtitle {
-          font-size: 12px;
-          color: #6f5644;
-          margin: 0;
         }
 
         .card {
           background: #fffaf5;
           border: 1px solid #e2d1c2;
           border-radius: 16px;
-          padding: 14px;
-          margin-bottom: 14px;
+          padding: 12px;
           box-shadow: 0 2px 8px rgba(123, 90, 67, 0.05);
         }
 
+        .compact-card {
+          margin-bottom: 0;
+        }
+
         .section-title {
-          font-size: 16px;
+          font-size: 15px;
           font-weight: 700;
-          margin: 0 0 12px;
+          margin: 0 0 10px;
           color: #6e4d39;
-        }
-
-        .profile-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 10px;
-        }
-
-        .profile-item {
-          background: #f4e8dc;
-          border: 1px solid #e2cdbb;
-          border-radius: 12px;
-          padding: 10px 12px;
-        }
-
-        .profile-label {
-          font-size: 10px;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.4px;
-          color: #8a6a55;
-          margin-bottom: 4px;
-        }
-
-        .profile-value {
-          font-size: 12px;
-          color: #2f241d;
-          font-weight: 600;
-        }
-
-        .profile-summary {
-          margin-top: 12px;
-          background: #f8efe7;
-          border: 1px solid #ead7c8;
-          border-radius: 12px;
-          padding: 10px 12px;
-          color: #5b4333;
         }
 
         .notes-list {
           display: flex;
           flex-direction: column;
-          gap: 8px;
+          gap: 7px;
         }
 
         .note-item {
@@ -998,7 +944,7 @@ function buildHtml(data) {
           background: #f7ede4;
           border: 1px solid #e7d7ca;
           border-radius: 12px;
-          padding: 9px 10px;
+          padding: 8px 10px;
         }
 
         .note-dot {
@@ -1007,39 +953,40 @@ function buildHtml(data) {
           min-width: 8px;
           border-radius: 50%;
           background: #b08968;
-          margin-top: 5px;
+          margin-top: 4px;
         }
 
         .meal-box {
           background: #fffaf5;
           border: 1px solid #deccb9;
           border-radius: 16px;
-          padding: 14px;
-          margin-bottom: 16px;
-          page-break-inside: avoid;
+          padding: 12px;
+          margin-bottom: 14px;
+          break-inside: avoid;
         }
 
         .meal-title {
-          font-size: 17px;
+          font-size: 16px;
           font-weight: 800;
           color: #6b4b36;
           margin-bottom: 8px;
         }
 
         .meal-subtext {
-          font-size: 11px;
+          font-size: 10px;
           color: #725947;
           background: #f4e7db;
           border: 1px solid #e3cfbe;
           border-radius: 10px;
-          padding: 8px 10px;
-          margin-bottom: 7px;
+          padding: 7px 9px;
+          margin-bottom: 6px;
         }
 
         .options-grid {
-          display: flex;
-          flex-direction: column;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
           gap: 12px;
+          align-items: stretch;
           margin-top: 10px;
         }
 
@@ -1047,10 +994,9 @@ function buildHtml(data) {
           background: #ffffff;
           border: 1px solid #e5d4c4;
           border-radius: 14px;
-          padding: 12px;
-          page-break-inside: avoid;
+          padding: 10px;
           break-inside: avoid;
-          width: 100%;
+          min-height: 100%;
         }
 
         .option-title {
@@ -1058,16 +1004,16 @@ function buildHtml(data) {
           background: #7b5a43;
           color: #fff;
           border-radius: 999px;
-          padding: 6px 12px;
-          font-size: 12px;
+          padding: 5px 11px;
+          font-size: 11px;
           font-weight: 700;
-          margin-bottom: 10px;
+          margin-bottom: 9px;
         }
 
         .option-lines {
           display: flex;
           flex-direction: column;
-          gap: 8px;
+          gap: 7px;
         }
 
         .food-line {
@@ -1080,17 +1026,17 @@ function buildHtml(data) {
           background: #f6eee6;
           border: 1px solid #ddc7b5;
           color: #2f241d;
-          border-radius: 14px;
-          padding: 9px 11px;
-          font-size: 11px;
-          line-height: 1.4;
+          border-radius: 12px;
+          padding: 8px 10px;
+          font-size: 10px;
+          line-height: 1.35;
         }
 
         .choice-stack {
           background: #fbf6f1;
           border: 1px dashed #dcc2af;
-          border-radius: 14px;
-          padding: 8px;
+          border-radius: 12px;
+          padding: 7px;
         }
 
         .choice-pill {
@@ -1098,19 +1044,19 @@ function buildHtml(data) {
         }
 
         .choice-item + .choice-item {
-          margin-top: 6px;
+          margin-top: 5px;
         }
 
         .choice-separator {
           text-align: center;
-          font-size: 11px;
+          font-size: 10px;
           font-weight: 700;
           color: #8b6a55;
-          margin: 5px 0 2px;
+          margin: 4px 0 2px;
         }
 
         .footer-space {
-          height: 6px;
+          height: 4px;
         }
       </style>
     </head>
@@ -1118,20 +1064,11 @@ function buildHtml(data) {
       ${renderCover(data, numeroOpcionesPlan)}
 
       <div class="page">
-        <div class="brand-wrap">
-          <div class="brand">DIETA MAKE</div>
-          <div class="brand-line"></div>
+        <div class="section-stack">
+          ${renderIndicacionesGenerales(indicacionesGenerales)}
+          ${renderNotas('Ajustes recomendados durante el día', ajustesPersonalizados.duranteDiaTexto)}
+          ${renderNotas('Ajustes recomendados para la última comida', ajustesPersonalizados.ultimaComidaTexto)}
         </div>
-
-        <div class="hero">
-          <div class="title">${escapeHtml(data.tituloPlan || 'Plan nutricional personalizado')}</div>
-          <p class="subtitle">Se respetan los alimentos de cada opción y solo se ajustan las fuentes de hidratos.</p>
-        </div>
-
-        ${renderClientProfile(data, numeroOpcionesPlan)}
-
-        ${renderNotas('Ajustes recomendados para la última comida', ajustesPersonalizados.ultimaComidaTexto)}
-        ${renderNotas('Ajustes recomendados durante el día', ajustesPersonalizados.duranteDiaTexto)}
 
         ${mealsHtml}
 
