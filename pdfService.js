@@ -139,11 +139,11 @@ function calcularCaloriasObjetivo(data) {
   let minimo = 0
 
   if (sexo === 'mujer') {
-    minimo = Math.max(1450, peso * 22)
+    minimo = Math.max(1450, peso * 20)
   } else if (sexo === 'hombre') {
-    minimo = Math.max(1650, peso * 24)
+    minimo = Math.max(1650, peso * 22)
   } else {
-    minimo = peso * 23
+    minimo = peso * 21
   }
 
   if (calorias < minimo) calorias = minimo
