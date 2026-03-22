@@ -1,5 +1,5 @@
 function escapeHtml(str) {
-  return String(str)
+  return String(str ?? '')
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;')
@@ -11,6 +11,7 @@ function formatFruitBase(frutas, frutaTipo) {
 
 function formatFruitLine(frutas, frutaTipo, frutaUnidades) {
   const frutaBase = formatFruitBase(frutas, frutaTipo)
+
   if (!frutaUnidades || frutaUnidades <= 0) return 'Sin fruta'
   if (frutaUnidades === 1) return frutaBase
   return `${frutaUnidades} × ${frutaBase}`
@@ -28,6 +29,7 @@ function formatSweetSource(frutas, sweetSource, frutaTipo, frutaUnidades, mielGr
     if (!mielGramos || mielGramos <= 0) return 'Sin miel'
     return `${mielGramos} g miel cruda`
   }
+
   return formatFruitLine(frutas, frutaTipo, frutaUnidades)
 }
 
@@ -35,15 +37,20 @@ function li(text) {
   return `<li>${escapeHtml(text)}</li>`
 }
 
+function optionCard(title, lines) {
+  return `
+    <div class="option-card">
+      <div class="option-title">${escapeHtml(title)}</div>
+      <ul>
+        ${lines.map(li).join('')}
+      </ul>
+    </div>
+  `
+}
+
 function renderComida1Option(option, ajustes, frutas) {
   const fruta = formatFruitLine(frutas, ajustes.frutaTipo, ajustes.frutaUnidades)
   const avena = `${ajustes.avenaGramos}g Copos de avena`
-
-  const commonTail = [
-    fruta,
-    '50g Queso de leche cruda o 40g Chocolate 80-100% o 30g Mantequilla / 24g Aceite de coco o 150g Aguacate o 35g Nueces de macadamia',
-    avena,
-  ]
 
   const options = {
     1: [
@@ -52,7 +59,9 @@ function renderComida1Option(option, ajustes, frutas) {
       'Canela ceylán al gusto',
       '10g Colágeno bovino hidrolizado',
       '1 Lata de mejillones al natural o 1 Lata escurrida (56g) de atún al natural o 100g Almejas salvajes o 75g Ostras o 75 Vieiras o 120g Gambas salvajes (puedes combinar dos opciones tomando la mitad de cada una)',
-      ...commonTail,
+      fruta,
+      '50g Queso de leche cruda o 40g Chocolate 80-100% o 30g Mantequilla / 24g Aceite de coco o 150g Aguacate o 35g Nueces de macadamia',
+      avena,
     ],
     2: [
       'Café al gusto',
@@ -114,7 +123,7 @@ function renderComida1Option(option, ajustes, frutas) {
     ],
   }
 
-  return (options[option] || options[1]).map(li).join('')
+  return optionCard(`Opción ${option}`, options[option] || options[1])
 }
 
 function renderComida2Option(option, ajustes, frutas) {
@@ -185,7 +194,7 @@ function renderComida2Option(option, ajustes, frutas) {
     ],
   }
 
-  return (options[option] || options[1]).map(li).join('')
+  return optionCard(`Opción ${option}`, options[option] || options[1])
 }
 
 function renderComida3Option(option, ajustes, frutas) {
@@ -275,7 +284,25 @@ function renderComida3Option(option, ajustes, frutas) {
     ],
   }
 
-  return (options[option] || options[1]).map(li).join('')
+  return optionCard(`Opción ${option}`, options[option] || options[1])
+}
+
+function renderAllComida1Options(ajustes, frutas) {
+  return [1, 2, 3, 4, 5, 6, 7]
+    .map((option) => renderComida1Option(option, ajustes, frutas))
+    .join('')
+}
+
+function renderAllComida2Options(ajustes, frutas) {
+  return [1, 2, 3, 4, 5, 6, 7]
+    .map((option) => renderComida2Option(option, ajustes, frutas))
+    .join('')
+}
+
+function renderAllComida3Options(ajustes, frutas) {
+  return [1, 2, 3, 4, 5, 6, 7]
+    .map((option) => renderComida3Option(option, ajustes, frutas))
+    .join('')
 }
 
 function buildHtml(data) {
@@ -297,7 +324,7 @@ function buildHtml(data) {
     .map(
       (meal) => `
         <tr>
-          <td>${meal.nombre}</td>
+          <td>${escapeHtml(meal.nombre)}</td>
           <td>${meal.baseKcal} kcal</td>
           <td>${meal.kcalObjetivo} kcal</td>
           <td>${meal.deltaKcal > 0 ? '+' : ''}${meal.deltaKcal} kcal</td>
@@ -315,10 +342,12 @@ function buildHtml(data) {
       <style>
         @page {
           size: A4;
-          margin: 16mm;
+          margin: 14mm;
         }
 
-        * { box-sizing: border-box; }
+        * {
+          box-sizing: border-box;
+        }
 
         body {
           margin: 0;
@@ -353,11 +382,11 @@ function buildHtml(data) {
         .section-title {
           font-size: 17px;
           font-weight: 700;
-          margin: 0 0 8px;
+          margin: 0 0 10px;
         }
 
         .metric {
-          font-size: 14px;
+          font-size: 13px;
           margin-bottom: 6px;
         }
 
@@ -365,23 +394,33 @@ function buildHtml(data) {
           border: 1px solid #e5e5e5;
           border-radius: 12px;
           padding: 12px;
-          margin-bottom: 14px;
+          margin-bottom: 16px;
           page-break-inside: avoid;
         }
 
         .meal-title {
-          font-size: 15px;
+          font-size: 16px;
           font-weight: 700;
-          margin-bottom: 8px;
+          margin-bottom: 10px;
         }
 
-        .option-tag {
-          display: inline-block;
-          font-size: 11px;
-          padding: 4px 8px;
-          border: 1px solid #ccc;
-          border-radius: 999px;
-          margin-bottom: 8px;
+        .options-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 10px;
+        }
+
+        .option-card {
+          border: 1px solid #e7e7e7;
+          border-radius: 10px;
+          padding: 10px;
+          page-break-inside: avoid;
+        }
+
+        .option-title {
+          font-size: 13px;
+          font-weight: 700;
+          margin-bottom: 6px;
         }
 
         table {
@@ -409,11 +448,17 @@ function buildHtml(data) {
         li {
           margin-bottom: 5px;
         }
+
+        .small-note {
+          color: #666;
+          font-size: 11px;
+          margin-top: 8px;
+        }
       </style>
     </head>
     <body>
       <div class="title">${escapeHtml(data.tituloPlan || 'Plan nutricional personalizado')}</div>
-      <div class="subtitle">Se respetan las opciones de alimentos y solo se ajustan las fuentes de hidratos</div>
+      <div class="subtitle">Se respetan los alimentos de cada opción y solo se ajustan las fuentes de hidratos</div>
 
       <div class="card">
         <div class="section-title">Resumen</div>
@@ -439,30 +484,30 @@ function buildHtml(data) {
             ${repartoRows}
           </tbody>
         </table>
+        <div class="small-note">
+          Los cambios se aplican sobre las líneas de hidratos: fruta, miel, pan, avena o patata/boniato/arroz según corresponda.
+        </div>
       </div>
 
       <div class="meal-box">
         <div class="meal-title">COMIDA 1</div>
-        <div class="option-tag">Opción ${data.comida1Opcion || 1}</div>
-        <ul>
-          ${renderComida1Option(data.comida1Opcion || 1, comida1, frutas)}
-        </ul>
+        <div class="options-grid">
+          ${renderAllComida1Options(comida1, frutas)}
+        </div>
       </div>
 
       <div class="meal-box">
         <div class="meal-title">COMIDA 2</div>
-        <div class="option-tag">Opción ${data.comida2Opcion || 1}</div>
-        <ul>
-          ${renderComida2Option(data.comida2Opcion || 1, comida2, frutas)}
-        </ul>
+        <div class="options-grid">
+          ${renderAllComida2Options(comida2, frutas)}
+        </div>
       </div>
 
       <div class="meal-box">
         <div class="meal-title">COMIDA 3</div>
-        <div class="option-tag">Opción ${data.comida3Opcion || 1}</div>
-        <ul>
-          ${renderComida3Option(data.comida3Opcion || 1, comida3, frutas)}
-        </ul>
+        <div class="options-grid">
+          ${renderAllComida3Options(comida3, frutas)}
+        </div>
       </div>
     </body>
     </html>
