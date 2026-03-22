@@ -31,11 +31,8 @@ function formatFruitOptionsLine(frutaUnidades) {
   return `${caqui} o ${manzana} o ${naranja} o ${pera} o ${platano} o ${kiwi} o ${mandarina}`
 }
 
-function formatCenaCarbSource(carbSource, gramos) {
-  if (carbSource === 'patata') return `${gramos} g patata`
-  if (carbSource === 'boniato') return `${gramos} g boniato`
-  if (carbSource === 'arroz') return `${gramos} g arroz blanco cocido`
-  return `${gramos} g patata`
+function formatCenaCarbLine(ajustes) {
+  return `${ajustes.patataGramos} g patata o ${ajustes.boniatoGramos} g boniato o ${ajustes.arrozGramos} g arroz blanco cocido`
 }
 
 function formatSweetSource(sweetSource, frutaUnidades, mielGramos) {
@@ -211,7 +208,7 @@ function renderComida2Option(option, ajustes) {
   return optionCard(`Opción ${option}`, options[option] || options[1])
 }
 
-function renderComida3Option(option, ajustesNormal, ajustesAvenaFruta, ajustesAvenaMiel) {
+function renderComida3Option(option, ajustesNormal, ajustesAvenaFruta) {
   if (option === 4 || option === 7) {
     const ajustes = ajustesAvenaFruta
     const sweetFruta = formatSweetSource('fruta', ajustes.frutaUnidades, ajustes.mielGramos)
@@ -219,8 +216,6 @@ function renderComida3Option(option, ajustesNormal, ajustesAvenaFruta, ajustesAv
 
     const optionsAvena = {
       4: [
-        '5 min antes de empezar a comer: Vinagre de sidra de manzana en pastilla (500 mg)',
-        'Al acabar de comer: Bisglicinato de magnesio (2 g)',
         'Queso fresco batido desnatado (300 g)',
         '11 g aceite de coco o 20 g chocolate 80–100%',
         `${avena} (dejar en remojo en agua la noche anterior con un poco de vinagre de sidra de manzana, en recipiente cerrado, lugar oscuro y a temperatura ambiente; después quitar el agua, lavar varias veces y cocinar antes de consumir)`,
@@ -228,8 +223,6 @@ function renderComida3Option(option, ajustesNormal, ajustesAvenaFruta, ajustesAv
         '50 g queso de leche cruda o 40 g chocolate 80–100% o 150 g aguacate o 35 g nueces de macadamia',
       ],
       7: [
-        '5 min antes de empezar a comer: Vinagre de sidra de manzana en pastilla (500 mg)',
-        'Al acabar de comer: Bisglicinato de magnesio (2 g)',
         '250 g yogur griego natural entero',
         '150 g claras de huevo pasteurizadas',
         'Aceite de coco (10 g)',
@@ -244,58 +237,48 @@ function renderComida3Option(option, ajustesNormal, ajustesAvenaFruta, ajustesAv
 
   const ajustes = ajustesNormal
   const fruta = formatFruitOptionsLine(ajustes.frutaUnidades)
-  const carbPrincipal = formatCenaCarbSource(ajustes.carbSource, ajustes.carbPrincipalGramos)
+  const carbLine = formatCenaCarbLine(ajustes)
 
   const options = {
     1: [
-      '5 min antes de empezar a comer: Vinagre de sidra de manzana en pastilla (500 mg)',
-      'Al acabar de comer: Bisglicinato de magnesio (2 g)',
       'Carne picada de ternera (150 g)',
       'Aceite de coco (5 g)',
-      carbPrincipal,
+      carbLine,
       '150 g pimientos rojos o 150 g calabacín o 150 g pepino o 200 g champiñones (hervir como mínimo durante 1 h)',
       fruta,
       '50 g queso de leche cruda o 40 g chocolate 80–100% o 150 g aguacate o 35 g nueces de macadamia',
     ],
     2: [
-      '5 min antes de empezar a comer: Vinagre de sidra de manzana en pastilla (500 mg)',
-      'Al acabar de comer: Bisglicinato de magnesio (2 g)',
       '290 g gambas salvajes o 175 g ostras o 190 g pulpo cocido o 185 g merluza o 245 g bacalao o 170 g boquerones salvajes (puedes combinar dos opciones tomando la mitad de la cantidad de cada una)',
       'Aceite de oliva virgen extra prensado en frío (8 g)',
       'Aceite de coco (5 g)',
-      carbPrincipal,
+      carbLine,
       '150 g pimientos rojos o 150 g calabacín o 150 g pepino o 200 g champiñones (hervir como mínimo durante 1 h)',
       fruta,
       '50 g queso de leche cruda o 40 g chocolate 80–100% o 150 g aguacate o 35 g nueces de macadamia',
     ],
     3: [
-      '5 min antes de empezar a comer: Vinagre de sidra de manzana en pastilla (500 mg)',
-      'Al acabar de comer: Bisglicinato de magnesio (2 g)',
       '140 g pechuga de pollo o pechuga de pavo o lomo de cerdo',
       'Aceite de oliva virgen extra prensado en frío (7 g)',
       'Aceite de coco (5 g)',
-      carbPrincipal,
+      carbLine,
       '150 g pimientos rojos o 150 g calabacín o 150 g pepino o 200 g champiñones (hervir como mínimo durante 1 h)',
       fruta,
       '50 g queso de leche cruda o 40 g chocolate 80–100% o 150 g aguacate o 35 g nueces de macadamia',
     ],
     5: [
-      '5 min antes de empezar a comer: Vinagre de sidra de manzana en pastilla (500 mg)',
-      'Al acabar de comer: Bisglicinato de magnesio (2 g)',
       '2 huevos enteros + 180 g claras de huevo',
       'Aceite de oliva virgen extra prensado en frío (7 g)',
       'Aceite de coco (5 g)',
-      carbPrincipal,
+      carbLine,
       '150 g pimientos rojos o 150 g calabacín o 150 g pepino o 200 g champiñones (hervir como mínimo durante 1 h)',
       fruta,
       '50 g queso de leche cruda o 40 g chocolate 80–100% o 150 g aguacate o 35 g nueces de macadamia',
     ],
     6: [
-      '5 min antes de empezar a comer: Vinagre de sidra de manzana en pastilla (500 mg)',
-      'Al acabar de comer: Bisglicinato de magnesio (2 g)',
       '200 g salmón',
       'Aceite de oliva virgen extra prensado en frío (5 g)',
-      carbPrincipal,
+      carbLine,
       '150 g pimientos rojos o 150 g calabacín o 150 g pepino o 200 g champiñones (hervir como mínimo durante 1 h)',
       fruta,
       '35 g nueces de macadamia o 150 g aguacate (ligeramente ajustado en grasas para compensar el salmón)',
@@ -314,7 +297,6 @@ function buildHtml(data) {
   const comida2 = data.ajustes?.comida2 || {}
   const comida3Normal = data.ajustes?.comida3Normal || {}
   const comida3AvenaFruta = data.ajustes?.comida3AvenaFruta || {}
-  const comida3AvenaMiel = data.ajustes?.comida3AvenaMiel || {}
 
   const numeroOpcionesPlan =
     data.numeroOpcionesPlan === 5 || data.numeroOpcionesPlan === 7 ? data.numeroOpcionesPlan : 1
@@ -400,6 +382,12 @@ function buildHtml(data) {
         .meal-title {
           font-size: 16px;
           font-weight: 700;
+          margin-bottom: 8px;
+        }
+
+        .meal-subtext {
+          font-size: 11px;
+          color: #555;
           margin-bottom: 10px;
         }
 
@@ -505,9 +493,11 @@ function buildHtml(data) {
 
       <div class="meal-box">
         <div class="meal-title">COMIDA 3</div>
+        <div class="meal-subtext">5 min antes de empezar a comer: Vinagre de sidra de manzana en pastilla (500 mg)</div>
+        <div class="meal-subtext">Al acabar de comer: Bisglicinato de magnesio (2 g)</div>
         <div class="options-grid">
           ${renderRange(numeroOpcionesPlan, (option) =>
-            renderComida3Option(option, comida3Normal, comida3AvenaFruta, comida3AvenaMiel)
+            renderComida3Option(option, comida3Normal, comida3AvenaFruta)
           )}
         </div>
       </div>
