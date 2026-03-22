@@ -49,72 +49,20 @@ function splitByOr(text) {
     .filter(Boolean)
 }
 
-function extractLeadingAmount(text) {
-  const clean = normalizeSpaces(text)
-  const patterns = [
-    /^(\d+(?:[.,]\d+)?\s*(?:g|gr|kg|ml|l|ud|uds|unidad|unidades))\s+/i,
-    /^(\d+(?:[.,]\d+)?)\s+(huevos?|claras?)\b/i,
-    /^(\d+\s*lata(?:s)?(?:\s+escurrida)?(?:\s*\([^)]+\))?)\s+/i,
-    /^(\d+\s*huevos?\s+enteros?\s*\+\s*\d+(?:[.,]\d+)?\s*g\s*claras?\s+de\s+huevo)\b/i,
-  ]
-
-  for (const pattern of patterns) {
-    const match = clean.match(pattern)
-    if (match) return match[1]
-  }
-
-  return null
+function hasChoice(line) {
+  return splitByOr(line).length > 1
 }
 
-function startsWithAmount(text) {
-  return !!extractLeadingAmount(text)
-}
-
-function expandChoiceAmounts(parts) {
-  if (!parts || parts.length <= 1) return parts || []
-
-  const firstAmount = extractLeadingAmount(parts[0])
-  if (!firstAmount) return parts
-
-  return parts.map((part, index) => {
-    const clean = normalizeSpaces(part)
-    if (index === 0) return clean
-    if (startsWithAmount(clean)) return clean
-    return `${firstAmount} ${clean}`
-  })
-}
-
-function renderFoodLine(line) {
-  const rawParts = splitByOr(line)
-
-  if (rawParts.length <= 1) {
-    return `
-      <div class="food-line">
-        <div class="food-row">
-          <span class="food-plus">+</span>
-          <div class="food-pill">${escapeHtml(line)}</div>
-        </div>
-      </div>
-    `
-  }
-
-  const parts = expandChoiceAmounts(rawParts)
+function renderFoodLine(line, index, total) {
+  const choice = hasChoice(line)
 
   return `
-    <div class="food-line choice-stack">
-      ${parts
-        .map(
-          (part, index) => `
-            <div class="choice-item">
-              <div class="food-row">
-                <span class="food-plus">+</span>
-                <div class="food-pill choice-pill">${escapeHtml(part)}</div>
-              </div>
-              ${index < parts.length - 1 ? '<div class="choice-separator">o</div>' : ''}
-            </div>
-          `
-        )
-        .join('')}
+    <div class="food-line">
+      <div class="food-pill ${choice ? 'food-pill-choice' : ''}">
+        ${escapeHtml(line)}
+      </div>
+      ${choice ? '<div class="choice-hint">Elige una opción</div>' : ''}
+      ${index < total - 1 ? '<div class="line-separator">+</div>' : ''}
     </div>
   `
 }
@@ -124,7 +72,7 @@ function optionCard(title, lines) {
     <div class="option-card">
       <div class="option-title">${escapeHtml(title)}</div>
       <div class="option-lines">
-        ${lines.map((line) => renderFoodLine(line)).join('')}
+        ${lines.map((line, index) => renderFoodLine(line, index, lines.length)).join('')}
       </div>
     </div>
   `
@@ -881,6 +829,7 @@ function buildHtml(data) {
           letter-spacing: 0.45px;
           color: #8a6a55;
           margin-bottom: 3px;
+          text-align: center;
         }
 
         .cover-profile-value {
@@ -888,6 +837,7 @@ function buildHtml(data) {
           color: #2f241d;
           font-weight: 600;
           line-height: 1.28;
+          text-align: center;
         }
 
         .cover-summary {
@@ -967,7 +917,8 @@ function buildHtml(data) {
           font-size: 14px;
           font-weight: 800;
           color: #6b4b36;
-          margin-bottom: 4px;
+          margin-bottom: 3px;
+          text-align: center;
         }
 
         .meal-subtext {
@@ -978,6 +929,7 @@ function buildHtml(data) {
           border-radius: 8px;
           padding: 5px 7px;
           margin-bottom: 5px;
+          text-align: center;
         }
 
         .options-grid {
@@ -996,6 +948,7 @@ function buildHtml(data) {
           break-inside: avoid;
           page-break-inside: avoid;
           min-height: 100%;
+          text-align: center;
         }
 
         .option-title {
@@ -1012,29 +965,11 @@ function buildHtml(data) {
         .option-lines {
           display: flex;
           flex-direction: column;
-          gap: 5px;
+          gap: 4px;
         }
 
         .food-line {
           display: block;
-        }
-
-        .food-row {
-          display: flex;
-          align-items: flex-start;
-          gap: 5px;
-        }
-
-        .food-plus {
-          display: inline-block;
-          font-weight: 800;
-          color: #7b5a43;
-          font-size: 10px;
-          line-height: 1.1;
-          margin-top: 4px;
-          width: 8px;
-          min-width: 8px;
-          text-align: center;
         }
 
         .food-pill {
@@ -1047,28 +982,30 @@ function buildHtml(data) {
           padding: 6px 7px;
           font-size: 8.9px;
           line-height: 1.22;
-        }
-
-        .choice-stack {
-          background: #fbf6f1;
-          border: 1px dashed #dcc2af;
-          border-radius: 10px;
-          padding: 5px;
-        }
-
-        .choice-pill {
-          background: #fff8f2;
-        }
-
-        .choice-item + .choice-item {
-          margin-top: 3px;
-        }
-
-        .choice-separator {
           text-align: center;
-          font-size: 8.6px;
+        }
+
+        .food-pill-choice {
+          margin-bottom: 3px;
+        }
+
+        .choice-hint {
+          display: inline-block;
+          background: #fff8f2;
+          border: 1px dashed #d7bda9;
+          color: #7b5a43;
+          border-radius: 999px;
+          padding: 2px 8px;
+          font-size: 8px;
           font-weight: 700;
-          color: #8b6a55;
+          margin: 0 auto 3px;
+        }
+
+        .line-separator {
+          text-align: center;
+          font-size: 10px;
+          font-weight: 800;
+          color: #7b5a43;
           margin: 3px 0 1px;
         }
 
