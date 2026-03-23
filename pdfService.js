@@ -26,10 +26,13 @@ const CARB_DB = {
   fruta_unidad: { kcal: 100, carbs: 25 },
   miel_cruda: { kcalPerGram: 3.04 },
   pan_masa_madre: { kcalPerGram: 2.4 },
-  patata_cocida: { kcalPerGram: 0.77 },
-  boniato_cocido: { kcalPerGram: 0.86 },
-  arroz_blanco_cocido: { kcalPerGram: 1.3 },
-  calabaza: { kcalPerGram: 0.26 },
+
+  // PESOS EN CRUDO
+  patata_cruda: { kcalPerGram: 0.77 },
+  boniato_crudo: { kcalPerGram: 0.86 },
+  arroz_blanco_crudo: { kcalPerGram: 3.6 },
+  calabaza_cruda: { kcalPerGram: 0.26 },
+
   copos_avena: { kcalPerGram: 3.89 },
 }
 
@@ -75,7 +78,13 @@ function normalizeActividad(value) {
   if (v.includes('sedent')) return 'sedentario'
   if (v.includes('1-3') || v.includes('1–3') || v.includes('liger')) return 'ligero'
   if (v.includes('3-5') || v.includes('3–5') || v.includes('moderad') || v.includes('media')) return 'moderado'
-  if (v.includes('6-7') || v.includes('6–7') || v.includes('alto') || v.includes('trabajo físico') || v.includes('trabajo fisico')) {
+  if (
+    v.includes('6-7') ||
+    v.includes('6–7') ||
+    v.includes('alto') ||
+    v.includes('trabajo físico') ||
+    v.includes('trabajo fisico')
+  ) {
     return 'alto'
   }
 
@@ -192,9 +201,14 @@ function ajustarDesayunoAvena(deltaKcal, baseAvena = 50, minAvena = 15) {
 
   const kcalAvenaNueva = avenaGramos * CARB_DB.copos_avena.kcalPerGram
   const kcalAvenaBase = baseAvena * CARB_DB.copos_avena.kcalPerGram
-  deltaRestante -= (kcalAvenaNueva - kcalAvenaBase)
+  deltaRestante -= kcalAvenaNueva - kcalAvenaBase
 
-  const frutaUnidades = ajustarFrutaUnidades(1, deltaRestante, CARB_DB.fruta_unidad.kcal, 0)
+  const frutaUnidades = ajustarFrutaUnidades(
+    1,
+    deltaRestante,
+    CARB_DB.fruta_unidad.kcal,
+    0
+  )
 
   return {
     frutaUnidades,
@@ -213,7 +227,7 @@ function ajustarComidaPan(deltaKcal) {
   )
 
   const kcalFrutaNueva = frutaUnidades * CARB_DB.fruta_unidad.kcal
-  deltaRestante -= (kcalFrutaNueva - 100)
+  deltaRestante -= kcalFrutaNueva - 100
 
   const panGramos = ajustarGramos(
     50,
@@ -229,25 +243,80 @@ function ajustarComidaPan(deltaKcal) {
   }
 }
 
-function ajustarCenaPatataBoniatoArroz(deltaKcal, base = { patata: 370, boniato: 240, arroz: 80 }, min = { patata: 120, boniato: 100, arroz: 60 }) {
+function ajustarCenaPatataBoniatoArroz(
+  deltaKcal,
+  base = { patata: 370, boniato: 240, arroz: 30 },
+  min = { patata: 120, boniato: 100, arroz: 20 }
+) {
   return {
-    patataGramos: ajustarGramos(base.patata, deltaKcal * 0.75, CARB_DB.patata_cocida.kcalPerGram, 10, min.patata),
-    boniatoGramos: ajustarGramos(base.boniato, deltaKcal * 0.75, CARB_DB.boniato_cocido.kcalPerGram, 10, min.boniato),
-    arrozGramos: ajustarGramos(base.arroz, deltaKcal * 0.75, CARB_DB.arroz_blanco_cocido.kcalPerGram, 10, min.arroz),
-    frutaUnidades: ajustarFrutaUnidades(1, deltaKcal * 0.25, CARB_DB.fruta_unidad.kcal, 0),
+    patataGramos: ajustarGramos(
+      base.patata,
+      deltaKcal * 0.75,
+      CARB_DB.patata_cruda.kcalPerGram,
+      10,
+      min.patata
+    ),
+    boniatoGramos: ajustarGramos(
+      base.boniato,
+      deltaKcal * 0.75,
+      CARB_DB.boniato_crudo.kcalPerGram,
+      10,
+      min.boniato
+    ),
+    arrozGramos: ajustarGramos(
+      base.arroz,
+      deltaKcal * 0.75,
+      CARB_DB.arroz_blanco_crudo.kcalPerGram,
+      5,
+      min.arroz
+    ),
+    frutaUnidades: ajustarFrutaUnidades(
+      1,
+      deltaKcal * 0.25,
+      CARB_DB.fruta_unidad.kcal,
+      0
+    ),
   }
 }
 
 function ajustarComidaPatataBoniatoCalabaza(deltaKcal) {
   return {
-    patataGramos: ajustarGramos(320, deltaKcal * 0.75, CARB_DB.patata_cocida.kcalPerGram, 10, 120),
-    boniatoGramos: ajustarGramos(210, deltaKcal * 0.75, CARB_DB.boniato_cocido.kcalPerGram, 10, 100),
-    calabazaGramos: ajustarGramos(720, deltaKcal * 0.75, CARB_DB.calabaza.kcalPerGram, 20, 250),
-    frutaUnidades: ajustarFrutaUnidades(1, deltaKcal * 0.25, CARB_DB.fruta_unidad.kcal, 0),
+    patataGramos: ajustarGramos(
+      320,
+      deltaKcal * 0.75,
+      CARB_DB.patata_cruda.kcalPerGram,
+      10,
+      120
+    ),
+    boniatoGramos: ajustarGramos(
+      210,
+      deltaKcal * 0.75,
+      CARB_DB.boniato_crudo.kcalPerGram,
+      10,
+      100
+    ),
+    calabazaGramos: ajustarGramos(
+      720,
+      deltaKcal * 0.75,
+      CARB_DB.calabaza_cruda.kcalPerGram,
+      20,
+      250
+    ),
+    frutaUnidades: ajustarFrutaUnidades(
+      1,
+      deltaKcal * 0.25,
+      CARB_DB.fruta_unidad.kcal,
+      0
+    ),
   }
 }
 
-function ajustarComidaAvenaMielFruta(deltaKcal, baseAvena = 70, minAvena = 15, baseMiel = 35) {
+function ajustarComidaAvenaMielFruta(
+  deltaKcal,
+  baseAvena = 70,
+  minAvena = 15,
+  baseMiel = 35
+) {
   let deltaRestante = deltaKcal
 
   const avenaGramos = ajustarGramos(
@@ -260,7 +329,7 @@ function ajustarComidaAvenaMielFruta(deltaKcal, baseAvena = 70, minAvena = 15, b
 
   const kcalAvenaNueva = avenaGramos * CARB_DB.copos_avena.kcalPerGram
   const kcalAvenaBase = baseAvena * CARB_DB.copos_avena.kcalPerGram
-  deltaRestante -= (kcalAvenaNueva - kcalAvenaBase)
+  deltaRestante -= kcalAvenaNueva - kcalAvenaBase
 
   const mielGramos = ajustarGramos(
     baseMiel,
@@ -272,9 +341,14 @@ function ajustarComidaAvenaMielFruta(deltaKcal, baseAvena = 70, minAvena = 15, b
 
   const kcalMielNueva = mielGramos * CARB_DB.miel_cruda.kcalPerGram
   const kcalMielBase = baseMiel * CARB_DB.miel_cruda.kcalPerGram
-  deltaRestante -= (kcalMielNueva - kcalMielBase)
+  deltaRestante -= kcalMielNueva - kcalMielBase
 
-  const frutaUnidades = ajustarFrutaUnidades(1, deltaRestante, CARB_DB.fruta_unidad.kcal, 0)
+  const frutaUnidades = ajustarFrutaUnidades(
+    1,
+    deltaRestante,
+    CARB_DB.fruta_unidad.kcal,
+    0
+  )
 
   return {
     avenaGramos,
@@ -285,7 +359,12 @@ function ajustarComidaAvenaMielFruta(deltaKcal, baseAvena = 70, minAvena = 15, b
 
 function ajustarComidaSoloFruta(deltaKcal) {
   return {
-    frutaUnidades: ajustarFrutaUnidades(1, deltaKcal, CARB_DB.fruta_unidad.kcal, 0),
+    frutaUnidades: ajustarFrutaUnidades(
+      1,
+      deltaKcal,
+      CARB_DB.fruta_unidad.kcal,
+      0
+    ),
   }
 }
 
@@ -302,9 +381,14 @@ function ajustarComidaFrutaOMiel(deltaKcal, baseMiel = 35) {
 
   const kcalMielNueva = mielGramos * CARB_DB.miel_cruda.kcalPerGram
   const kcalMielBase = baseMiel * CARB_DB.miel_cruda.kcalPerGram
-  deltaRestante -= (kcalMielNueva - kcalMielBase)
+  deltaRestante -= kcalMielNueva - kcalMielBase
 
-  const frutaUnidades = ajustarFrutaUnidades(1, deltaRestante, CARB_DB.fruta_unidad.kcal, 0)
+  const frutaUnidades = ajustarFrutaUnidades(
+    1,
+    deltaRestante,
+    CARB_DB.fruta_unidad.kcal,
+    0
+  )
 
   return {
     mielGramos,
@@ -387,7 +471,11 @@ function getAjustesDespertares(despertaresNoche) {
 
   if (despertaresNoche === '3_mas') {
     return {
-      ultimaComida: ['mas_dulce_noche', 'mas_hidrato_noche', 'mas_grasa_noche'],
+      ultimaComida: [
+        'mas_dulce_noche',
+        'mas_hidrato_noche',
+        'mas_grasa_noche',
+      ],
       duranteDia: [],
     }
   }
@@ -399,7 +487,10 @@ function getAjustesDespertares(despertaresNoche) {
 }
 
 function traducirAjustesPersonalizados(data) {
-  const a1 = getAjustesDespertarYPrimeraComida(data.despertar, data.primera_comida)
+  const a1 = getAjustesDespertarYPrimeraComida(
+    data.despertar,
+    data.primera_comida
+  )
   const a2 = getAjustesBano(data.bano)
   const a3 = getAjustesDespertares(data.despertares_noche)
 
@@ -416,18 +507,25 @@ function traducirAjustesPersonalizados(data) {
   return {
     ultimaComidaTexto: ultimaComida.map((code) => {
       const map = {
-        mas_dulce_noche: 'En la última comida te conviene meter un poco más de dulce fácil de digerir. Ejemplos: más miel, fruta o dátiles si esa opción los permite.',
-        mas_hidrato_noche: 'En la última comida te conviene meter un poco más de hidrato de digestión lenta. Ejemplos: más patata, boniato, arroz, calabaza o avena según la opción.',
-        mas_grasa_noche: 'En la última comida te conviene añadir un poco más de grasa. Ejemplos: aceite de coco, queso, aguacate o nueces según la opción.',
+        mas_dulce_noche:
+          'En la última comida te conviene meter un poco más de dulce fácil de digerir. Ejemplos: más miel, fruta o dátiles si esa opción los permite.',
+        mas_hidrato_noche:
+          'En la última comida te conviene meter un poco más de hidrato de digestión lenta. Ejemplos: más patata, boniato, arroz, calabaza o avena según la opción.',
+        mas_grasa_noche:
+          'En la última comida te conviene añadir un poco más de grasa. Ejemplos: aceite de coco, queso, aguacate o nueces según la opción.',
       }
       return map[code] || code
     }),
     duranteDiaTexto: duranteDia.map((code) => {
       const map = {
-        menos_proteina: 'Durante el día intenta no cargar demasiado las comidas de proteína.',
-        mas_calcio: 'Durante el día prioriza alimentos con calcio. Ejemplos: leche, yogur, queso fresco batido o queso.',
-        mas_fibra: 'Durante el día mete algo más de fibra. Ejemplos: más verdura, más fruta entera o un poco más de avena si te sienta bien.',
-        cafe_con_azucar: 'Puedes tomar café con un poco de azúcar junto a las comidas.',
+        menos_proteina:
+          'Durante el día intenta no cargar demasiado las comidas de proteína.',
+        mas_calcio:
+          'Durante el día prioriza alimentos con calcio. Ejemplos: leche, yogur, queso fresco batido o queso.',
+        mas_fibra:
+          'Durante el día mete algo más de fibra. Ejemplos: más verdura, más fruta entera o un poco más de avena si te sienta bien.',
+        cafe_con_azucar:
+          'Puedes tomar café con un poco de azúcar junto a las comidas.',
       }
       return map[code] || code
     }),
@@ -447,8 +545,17 @@ function generarPlanComidas(numeroComidas, caloriasObjetivo) {
       ajustes: {
         comida1: ajustarDesayunoAvena(reparto[0].deltaKcal, 50, 15),
         comida2: ajustarComidaPan(reparto[1].deltaKcal),
-        comida3Normal: ajustarCenaPatataBoniatoArroz(reparto[2].deltaKcal, { patata: 370, boniato: 240, arroz: 80 }, { patata: 120, boniato: 100, arroz: 60 }),
-        comida3Avena: ajustarComidaAvenaMielFruta(reparto[2].deltaKcal, 70, 15, 35),
+        comida3Normal: ajustarCenaPatataBoniatoArroz(
+          reparto[2].deltaKcal,
+          { patata: 370, boniato: 240, arroz: 30 },
+          { patata: 120, boniato: 100, arroz: 20 }
+        ),
+        comida3Avena: ajustarComidaAvenaMielFruta(
+          reparto[2].deltaKcal,
+          70,
+          15,
+          35
+        ),
       },
     }
   }
@@ -462,7 +569,12 @@ function generarPlanComidas(numeroComidas, caloriasObjetivo) {
           frutaUnidades: ajustarFrutaUnidades(1, reparto[0].deltaKcal, 100, 0),
         },
         comida2Normal: ajustarComidaPatataBoniatoCalabaza(reparto[1].deltaKcal),
-        comida2Avena: ajustarComidaAvenaMielFruta(reparto[1].deltaKcal, 65, 15, 35),
+        comida2Avena: ajustarComidaAvenaMielFruta(
+          reparto[1].deltaKcal,
+          65,
+          15,
+          35
+        ),
         comida3: ajustarComidaSoloFruta(reparto[2].deltaKcal),
         comida4: ajustarComidaFrutaOMiel(reparto[3].deltaKcal, 35),
       },
