@@ -25,12 +25,12 @@ function getPlanConfig(plan) {
       price: 9,
       label: 'Plan básico',
     },
-    recomendado_5_opciones: {
+    recomendado_2_opciones: {
       amount: 1400,
       price: 14,
       label: 'Plan recomendado',
     },
-    avanzado_7_opciones: {
+    avanzado_3_opciones: {
       amount: 2400,
       price: 24,
       label: 'Plan avanzado',
