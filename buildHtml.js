@@ -129,9 +129,15 @@ function renderIndicacionesGenerales(items) {
     'Mantén horarios de comida lo más regulares posible.',
     'Ajusta cantidades en función de hambre, saciedad y evolución.',
     'Hidrátate de forma estable durante todo el día.',
+    'Todos los pesos de patata, boniato, arroz y calabaza están expresados en crudo.',
   ]
 
-  const finalItems = Array.isArray(items) && items.length > 0 ? items : defaultItems
+  const finalItems = Array.isArray(items) && items.length > 0
+    ? [
+        ...items,
+        'Todos los pesos de patata, boniato, arroz y calabaza están expresados en crudo.',
+      ]
+    : defaultItems
 
   return `
     <div class="card compact-card">
@@ -170,6 +176,18 @@ function formatFecha(dateInput) {
   return `${day}/${month}/${year}`
 }
 
+function formatDespertar(value) {
+  if (value === 'cansado') return 'Me despierto cansado'
+  if (value === 'activado') return 'Me despierto activado'
+  return '-'
+}
+
+function formatPrimeraComida(value) {
+  if (value === 'energia') return 'Me da energía'
+  if (value === 'relaja') return 'Me relaja'
+  return '-'
+}
+
 function renderCover(data) {
   const objetivo = formatObjetivo(data)
   const nombre = data.nombre || 'Cliente'
@@ -186,6 +204,9 @@ function renderCover(data) {
     ['Edad', data.edad ? `${data.edad} años` : '-'],
     ['Altura', data.altura ? `${data.altura} cm` : '-'],
     ['Peso', data.peso ? `${data.peso} kg` : '-'],
+    ['Despertar', formatDespertar(data.despertar)],
+    ['Primera comida', formatPrimeraComida(data.primera_comida)],
+    ['Comidas/día', data.comidasDia || data.comidas || '-'],
   ]
 
   return `
@@ -392,7 +413,7 @@ function render3Meals(data, numeroOpcionesPlan) {
       ])
     }
 
-    const carbLine = `${c3n.patataGramos} g Patata o ${c3n.boniatoGramos} g Boniato o ${c3n.arrozGramos} g Arroz blanco cocido`
+    const carbLine = `${c3n.patataGramos} g Patata o ${c3n.boniatoGramos} g Boniato o ${c3n.arrozGramos} g Arroz blanco crudo`
     const fruta = formatFruitOptionsLine(c3n.frutaUnidades)
 
     const options = {
