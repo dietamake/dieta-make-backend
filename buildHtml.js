@@ -697,7 +697,7 @@ function render3Meals(data, numeroOpcionesPlan) {
       lines: [
         '300 g Queso fresco batido desnatado',
         '11 g Aceite de coco o 20 g Chocolate 80–100%',
-        `${c3a.avenaGramos} g Copos de avena (dejar en remojo en agua la noche anterior con un poco de vinagre de sidra de manzana, en recipiente cerrado, lugar oscuro y a temperatura ambiente; después quitar el agua, lavar varias veces y cocinar antes de consumir)`,
+        `${c3a.avenaGramos} g Copos de avena`,
         formatFruitOrMielLine(c3a.frutaUnidades, c3a.mielGramos),
         '50 g Queso de leche cruda o 40 g Chocolate 80–100% o 150 g Aguacate o 35 g Nueces de macadamia',
       ],
@@ -883,7 +883,7 @@ function render4Meals(data, numeroOpcionesPlan) {
       lines: [
         '300 g Queso fresco batido desnatado',
         '11 g Aceite de coco o 20 g Chocolate 80–100%',
-        `${c2a.avenaGramos} g Copos de avena (dejar en remojo en agua la noche anterior, con un poco de vinagre de sidra de manzana, dentro de un recipiente cerrado, en un lugar oscuro y a temperatura ambiente. Quitar el agua, lavar varias veces y cocinar antes de consumir)`,
+        `${c2a.avenaGramos} g Copos de avena`,
         formatFruitOrMielLine(c2a.frutaUnidades, c2a.mielGramos),
       ],
     },
