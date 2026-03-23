@@ -107,6 +107,15 @@ function normalizeSueno(value) {
   return 7
 }
 
+function normalizeDespertar(value) {
+  const v = String(value || '').trim().toLowerCase()
+
+  if (v.includes('cansad')) return 'cansado'
+  if (v.includes('activad')) return 'activado'
+
+  return ''
+}
+
 function getNumeroOpcionesPlan(plan) {
   const v = String(plan || '').trim().toLowerCase()
   if (v === 'avanzado_7_opciones') return 7
@@ -309,11 +318,35 @@ function mergeUnique(arr1 = [], arr2 = []) {
   return [...new Set([...arr1, ...arr2])]
 }
 
-function getAjustesPrimeraComida(primeraComida) {
-  if (primeraComida === 'relaja') {
+function getAjustesDespertarYPrimeraComida(despertar, primeraComida) {
+  const d = String(despertar || '').trim().toLowerCase()
+  const p = String(primeraComida || '').trim().toLowerCase()
+
+  if (d === 'cansado' && p === 'energia') {
+    return {
+      ultimaComida: [],
+      duranteDia: [],
+    }
+  }
+
+  if (d === 'activado' && p === 'relaja') {
+    return {
+      ultimaComida: ['mas_hidrato_noche'],
+      duranteDia: [],
+    }
+  }
+
+  if (d === 'cansado' && p === 'relaja') {
     return {
       ultimaComida: [],
       duranteDia: ['menos_proteina', 'mas_calcio'],
+    }
+  }
+
+  if (d === 'activado' && p === 'energia') {
+    return {
+      ultimaComida: ['mas_hidrato_noche'],
+      duranteDia: [],
     }
   }
 
@@ -366,7 +399,7 @@ function getAjustesDespertares(despertaresNoche) {
 }
 
 function traducirAjustesPersonalizados(data) {
-  const a1 = getAjustesPrimeraComida(data.primera_comida)
+  const a1 = getAjustesDespertarYPrimeraComida(data.despertar, data.primera_comida)
   const a2 = getAjustesBano(data.bano)
   const a3 = getAjustesDespertares(data.despertares_noche)
 
@@ -474,6 +507,7 @@ function normalizeLeadData(data) {
     grasa: normalizeGrasa(data.grasa_abdominal),
     plan: data.plan || '',
     numeroOpcionesPlan: getNumeroOpcionesPlan(data.plan),
+    despertar: normalizeDespertar(data.despertar),
     primera_comida: data.primera_comida || '',
     bano: data.bano || '',
     despertares_noche: data.despertares_noche || '',
