@@ -702,29 +702,6 @@ function render3Meals(data, numeroOpcionesPlan) {
         '50 g Queso de leche cruda o 40 g Chocolate 80–100% o 150 g Aguacate o 35 g Nueces de macadamia',
       ],
     },
-    {
-      key: 'c3_o5',
-      lines: [
-        '2 huevos enteros + 180 g Claras de huevo',
-        '7 g Aceite de oliva virgen extra prensado en frío',
-        '5 g Aceite de coco',
-        carb3,
-        '150 g Pimientos rojos o 150 g Calabacín o 150 g Pepino o 200 g Champiñones (hervir como mínimo durante 1 h)',
-        fruta3,
-        '50 g Queso de leche cruda o 40 g Chocolate 80–100% o 150 g Aguacate o 35 g Nueces de macadamia',
-      ],
-    },
-    {
-      key: 'c3_o6',
-      lines: [
-        '200 g Salmón',
-        '5 g Aceite de oliva virgen extra prensado en frío',
-        carb3,
-        '150 g Pimientos rojos o 150 g Calabacín o 150 g Pepino o 200 g Champiñones (hervir como mínimo durante 1 h)',
-        fruta3,
-        '35 g Nueces de macadamia o 150 g Aguacate (ligeramente ajustado en grasas para compensar el salmón)',
-      ],
-    },
   ]
 
   return `
