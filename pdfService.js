@@ -127,9 +127,26 @@ function normalizeDespertar(value) {
 
 function getNumeroOpcionesPlan(plan) {
   const v = String(plan || '').trim().toLowerCase()
-  if (v === 'avanzado_7_opciones') return 7
-  if (v === 'recomendado_5_opciones') return 5
+  if (v === 'avanzado_3_opciones') return 3
+  if (v === 'recomendado_2_opciones') return 2
   return 1
+}
+
+function createSeedFromLead(data) {
+  const seedSource = [
+    data.id || '',
+    data.email || '',
+    data.nombre || '',
+    data.plan || '',
+    data.created_at || '',
+  ].join('|')
+
+  let hash = 0
+  for (let i = 0; i < seedSource.length; i += 1) {
+    hash = (hash * 31 + seedSource.charCodeAt(i)) >>> 0
+  }
+
+  return hash || 123456789
 }
 
 function calcularCaloriasObjetivo(data) {
@@ -164,10 +181,10 @@ function calcularCaloriasObjetivo(data) {
   if (sueno < 6) calorias *= 0.95
   if (sueno > 8) calorias *= 1.02
 
-  // 🔻 Déficit del 10%
+  // Déficit del 10%
   calorias *= 0.9
 
-  // 🚧 Mínimo de seguridad
+  // Mínimo de seguridad
   if (calorias < 1600) calorias = 1600
 
   return Math.round(calorias)
@@ -625,6 +642,7 @@ function normalizeLeadData(data) {
     primera_comida: data.primera_comida || '',
     bano: data.bano || '',
     despertares_noche: data.despertares_noche || '',
+    randomSeed: createSeedFromLead(data),
   }
 }
 
