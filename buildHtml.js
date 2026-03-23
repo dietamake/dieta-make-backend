@@ -188,6 +188,168 @@ function formatPrimeraComida(value) {
   return '-'
 }
 
+function formatActividad(value) {
+  const map = {
+    sedentario: 'Sedentario',
+    ligero: 'Ligero',
+    moderado: 'Moderado',
+    alto: 'Alto',
+  }
+  return map[value] || value || '-'
+}
+
+function formatGrasa(value) {
+  const map = {
+    muy_tapado: 'Muy tapado',
+    normal: 'Normal',
+    marcado: 'Marcado',
+  }
+  return map[value] || value || '-'
+}
+
+function formatSueno(value) {
+  if (value === 5) return 'Menos de 6 h'
+  if (value === 7) return '6–8 h'
+  if (value === 9) return 'Más de 8 h'
+  return value || '-'
+}
+
+function renderControlInterno(data) {
+  const reparto = Array.isArray(data.reparto) ? data.reparto : []
+  const ajustes = data.ajustes || {}
+
+  const factoresActividad = {
+    sedentario: 1.2,
+    ligero: 1.4,
+    moderado: 1.55,
+    alto: 1.75,
+  }
+
+  const factoresGrasa = {
+    muy_tapado: 0.8,
+    normal: 0.85,
+    marcado: 0.9,
+  }
+
+  let bmr = '-'
+  if (data.sexo === 'hombre') {
+    bmr = Math.round(10 * Number(data.peso || 0) + 6.25 * Number(data.altura || 0) - 5 * Number(data.edad || 0) + 5)
+  } else if (data.sexo === 'mujer') {
+    bmr = Math.round(10 * Number(data.peso || 0) + 6.25 * Number(data.altura || 0) - 5 * Number(data.edad || 0) - 161)
+  }
+
+  const factorActividad = factoresActividad[data.actividad] || '-'
+  const factorGrasa = factoresGrasa[data.grasa] || '-'
+  const ajusteSueno =
+    Number(data.sueno) < 6
+      ? '-5%'
+      : Number(data.sueno) > 8
+        ? '+2%'
+        : '0%'
+  const deficitFinal = '-200 kcal'
+
+  const ajustesRows = [
+    ['comida1', JSON.stringify(ajustes.comida1 || {})],
+    ['comida2', JSON.stringify(ajustes.comida2 || {})],
+    ['comida2Normal', JSON.stringify(ajustes.comida2Normal || {})],
+    ['comida2Avena', JSON.stringify(ajustes.comida2Avena || {})],
+    ['comida3', JSON.stringify(ajustes.comida3 || {})],
+    ['comida3Normal', JSON.stringify(ajustes.comida3Normal || {})],
+    ['comida3Avena', JSON.stringify(ajustes.comida3Avena || {})],
+    ['comida4', JSON.stringify(ajustes.comida4 || {})],
+  ].filter(([, value]) => value !== '{}')
+
+  return `
+    <div class="card compact-card internal-card">
+      <div class="section-title">Control interno · cálculo y ajustes</div>
+
+      <div class="internal-subtitle">1. Cálculo de calorías</div>
+      <table class="internal-table">
+        <tbody>
+          <tr><th>Sexo</th><td>${escapeHtml(data.sexo || '-')}</td></tr>
+          <tr><th>Edad</th><td>${escapeHtml(data.edad || '-')}</td></tr>
+          <tr><th>Altura</th><td>${escapeHtml(data.altura || '-')}</td></tr>
+          <tr><th>Peso</th><td>${escapeHtml(data.peso || '-')}</td></tr>
+          <tr><th>BMR estimado</th><td>${escapeHtml(bmr)}</td></tr>
+          <tr><th>Actividad</th><td>${escapeHtml(formatActividad(data.actividad))} · factor ${escapeHtml(factorActividad)}</td></tr>
+          <tr><th>Grasa abdominal</th><td>${escapeHtml(formatGrasa(data.grasa))} · factor ${escapeHtml(factorGrasa)}</td></tr>
+          <tr><th>Sueño</th><td>${escapeHtml(formatSueno(data.sueno))} · ajuste ${escapeHtml(ajusteSueno)}</td></tr>
+          <tr><th>Ajuste final</th><td>${escapeHtml(deficitFinal)}</td></tr>
+          <tr><th>Calorías objetivo</th><td><strong>${escapeHtml(data.caloriasObjetivo || '-')} kcal</strong></td></tr>
+        </tbody>
+      </table>
+
+      <div class="internal-subtitle">2. Reparto por comida</div>
+      <table class="internal-table">
+        <thead>
+          <tr>
+            <th>Comida</th>
+            <th>%</th>
+            <th>Base kcal</th>
+            <th>Objetivo kcal</th>
+            <th>Delta kcal</th>
+            <th>Delta carbs aprox.</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${
+            reparto.length
+              ? reparto
+                  .map(
+                    (item) => `
+                      <tr>
+                        <td>${escapeHtml(item.nombre || item.key || '-')}</td>
+                        <td>${escapeHtml(Math.round((item.pct || 0) * 100))}%</td>
+                        <td>${escapeHtml(item.baseKcal ?? '-')}</td>
+                        <td>${escapeHtml(item.kcalObjetivo ?? '-')}</td>
+                        <td>${escapeHtml(item.deltaKcal ?? '-')}</td>
+                        <td>${escapeHtml(item.deltaCarbs ?? '-')} g</td>
+                      </tr>
+                    `
+                  )
+                  .join('')
+              : `
+                <tr>
+                  <td colspan="6">Sin datos de reparto</td>
+                </tr>
+              `
+          }
+        </tbody>
+      </table>
+
+      <div class="internal-subtitle">3. Ajustes aplicados para cuadrar la dieta</div>
+      <table class="internal-table">
+        <thead>
+          <tr>
+            <th>Bloque</th>
+            <th>Ajuste</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${
+            ajustesRows.length
+              ? ajustesRows
+                  .map(
+                    ([key, value]) => `
+                      <tr>
+                        <td>${escapeHtml(key)}</td>
+                        <td class="mono-cell">${escapeHtml(value)}</td>
+                      </tr>
+                    `
+                  )
+                  .join('')
+              : `
+                <tr>
+                  <td colspan="2">Sin ajustes calculados</td>
+                </tr>
+              `
+          }
+        </tbody>
+      </table>
+    </div>
+  `
+}
+
 function renderCover(data) {
   const objetivo = formatObjetivo(data)
   const nombre = data.nombre || 'Cliente'
@@ -1086,6 +1248,47 @@ function buildHtml(data) {
         .footer-space {
           height: 2px;
         }
+
+        .internal-card {
+          background: #fff6ef;
+          border: 1px solid #d9bfa7;
+        }
+
+        .internal-subtitle {
+          font-size: 11px;
+          font-weight: 700;
+          color: #6b4b36;
+          margin: 10px 0 6px;
+        }
+
+        .internal-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 8px;
+          table-layout: fixed;
+        }
+
+        .internal-table th,
+        .internal-table td {
+          border: 1px solid #dcc8b7;
+          padding: 6px 7px;
+          font-size: 8.4px;
+          line-height: 1.2;
+          vertical-align: top;
+          text-align: left;
+          word-break: break-word;
+        }
+
+        .internal-table th {
+          background: #f2e3d6;
+          color: #5a4030;
+          font-weight: 700;
+        }
+
+        .mono-cell {
+          font-family: "Courier New", monospace;
+          font-size: 7.8px;
+        }
       </style>
     </head>
     <body>
@@ -1096,6 +1299,7 @@ function buildHtml(data) {
           ${renderIndicacionesGenerales(indicacionesGenerales)}
           ${renderNotas('Ajustes recomendados durante el día', ajustesPersonalizados.duranteDiaTexto)}
           ${renderNotas('Ajustes recomendados para la última comida', ajustesPersonalizados.ultimaComidaTexto)}
+          ${renderControlInterno(data)}
         </div>
 
         ${mealsHtml}
