@@ -164,8 +164,10 @@ function calcularCaloriasObjetivo(data) {
   if (sueno < 6) calorias *= 0.95
   if (sueno > 8) calorias *= 1.02
 
-  calorias -= 200
+  // 🔻 Déficit del 10%
+  calorias *= 0.9
 
+  // 🚧 Mínimo de seguridad
   if (calorias < 1600) calorias = 1600
 
   return Math.round(calorias)
