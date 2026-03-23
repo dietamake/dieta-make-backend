@@ -878,15 +878,6 @@ function render4Meals(data, numeroOpcionesPlan) {
         'Tomate, cebolla cruda y/o pimiento verde crudo al gusto',
       ],
     },
-    {
-      key: 'c2_o5',
-      lines: [
-        '300 g Queso fresco batido desnatado',
-        '11 g Aceite de coco o 20 g Chocolate 80–100%',
-        `${c2a.avenaGramos} g Copos de avena`,
-        formatFruitOrMielLine(c2a.frutaUnidades, c2a.mielGramos),
-      ],
-    },
   ]
 
   const fruta3 = formatFruitOptionsLine(c3.frutaUnidades)
