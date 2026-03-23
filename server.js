@@ -65,33 +65,40 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
     console.log('Metadata:', data)
 
     try {
+      const payload = {
+        nombre: data.nombre || '',
+        email: data.email || '',
+        sexo: data.sexo || '',
+        edad: Number(data.edad) || 0,
+        altura: Number(data.altura) || 0,
+        peso: Number(data.peso) || 0,
+        objetivo: data.objetivo || '',
+        actividad: data.actividad || '',
+        sueno: data.sueno || '',
+        grasa_abdominal: data.grasa_abdominal || '',
+        despertar: data.despertar || null,
+        primera_comida: data.primera_comida || '',
+        bano: data.bano || '',
+        despertares_noche: data.despertares_noche || '',
+        comidas: Number(data.comidas) || 0,
+        plan: data.plan || '',
+        precio: Number(data.precio) || 0,
+        pagado: true,
+        estado_pdf: 'pending',
+      }
+
+      console.log('Payload a Supabase:', payload)
+
       const { data: insertedLead, error: insertError } = await supabase
         .from('leads_dietas')
-        .insert({
-          nombre: data.nombre || '',
-          email: data.email || '',
-          sexo: data.sexo || '',
-          edad: Number(data.edad) || 0,
-          altura: Number(data.altura) || 0,
-          peso: Number(data.peso) || 0,
-          objetivo: data.objetivo || '',
-          actividad: data.actividad || '',
-          sueno: data.sueno || '',
-          grasa_abdominal: data.grasa_abdominal || '',
-          despertar: data.despertar || '',
-          primera_comida: data.primera_comida || '',
-          bano: data.bano || '',
-          despertares_noche: data.despertares_noche || '',
-          comidas: Number(data.comidas) || 0,
-          plan: data.plan || '',
-          precio: Number(data.precio) || 0,
-          pagado: true,
-          estado_pdf: 'pending',
-        })
+        .insert(payload)
         .select('id')
         .single()
 
-      if (insertError) throw insertError
+      if (insertError) {
+        console.error('SUPABASE INSERT ERROR:', insertError)
+        throw insertError
+      }
 
       console.log('Lead guardado con id:', insertedLead.id)
 
@@ -102,12 +109,17 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
         .from('pdfs')
         .getPublicUrl(filePath)
 
-      await supabase
+      const { error: updateError } = await supabase
         .from('leads_dietas')
         .update({
           pdf_url: publicUrlData?.publicUrl || null,
         })
         .eq('id', insertedLead.id)
+
+      if (updateError) {
+        console.error('SUPABASE UPDATE ERROR:', updateError)
+        throw updateError
+      }
 
       await sendDietEmail({
         to: data.email,
@@ -133,6 +145,8 @@ app.use(express.json())
 app.post('/create-checkout-session', async (req, res) => {
   try {
     const data = req.body
+
+    console.log('BODY RECIBIDO EN CHECKOUT:', data)
 
     if (!data.email) {
       return res.status(400).json({ error: 'Email obligatorio' })
