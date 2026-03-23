@@ -66,15 +66,19 @@ function renderChoiceBoxes(line) {
   if (parts.length <= 1) return ''
 
   return `
-    <div class="choice-box-label">Elige una opción</div>
-    <div class="choice-box-grid">
-      ${parts
-        .map(
-          (part) => `
-            <div class="choice-box-item">${escapeHtml(part)}</div>
-          `
-        )
-        .join('')}
+    <div class="choice-box-wrap">
+      <div class="choice-box-label">Elige una opción</div>
+      <div class="choice-box-grid">
+        ${parts
+          .map(
+            (part) => `
+              <div class="choice-box-item">
+                <div class="choice-box-item-inner">${escapeHtml(part)}</div>
+              </div>
+            `
+          )
+          .join('')}
+      </div>
     </div>
   `
 }
@@ -85,7 +89,13 @@ function renderFoodLine(line, index, total) {
 
   return `
     <div class="food-line">
-      ${choice ? renderChoiceBoxes(cleanedLine) : `<div class="food-pill">${escapeHtml(cleanedLine)}</div>`}
+      <div class="food-line-inner">
+        ${
+          choice
+            ? renderChoiceBoxes(cleanedLine)
+            : `<div class="food-pill"><div class="food-pill-inner">${escapeHtml(cleanedLine)}</div></div>`
+        }
+      </div>
       ${index < total - 1 ? '<div class="line-separator">+</div>' : ''}
     </div>
   `
@@ -94,9 +104,13 @@ function renderFoodLine(line, index, total) {
 function optionCard(title, lines) {
   return `
     <div class="option-card">
-      <div class="option-title">${escapeHtml(title)}</div>
-      <div class="option-lines">
-        ${lines.map((line, index) => renderFoodLine(line, index, lines.length)).join('')}
+      <div class="option-card-inner">
+        <div class="option-title-row">
+          <div class="option-title">${escapeHtml(title)}</div>
+        </div>
+        <div class="option-lines">
+          ${lines.map((line, index) => renderFoodLine(line, index, lines.length)).join('')}
+        </div>
       </div>
     </div>
   `
@@ -132,12 +146,10 @@ function renderIndicacionesGenerales(items) {
     'Todos los pesos de patata, boniato, arroz y calabaza están expresados en crudo.',
   ]
 
-  const finalItems = Array.isArray(items) && items.length > 0
-    ? [
-        ...items,
-        'Todos los pesos de patata, boniato, arroz y calabaza están expresados en crudo.',
-      ]
-    : defaultItems
+  const finalItems =
+    Array.isArray(items) && items.length > 0
+      ? [...items, 'Todos los pesos de patata, boniato, arroz y calabaza están expresados en crudo.']
+      : defaultItems
 
   return `
     <div class="card compact-card">
@@ -293,11 +305,7 @@ function renderControlInterno(data) {
   const factorActividad = factoresActividad[data.actividad] || '-'
   const factorGrasa = factoresGrasa[data.grasa] || '-'
   const ajusteSueno =
-    Number(data.sueno) < 6
-      ? '-5%'
-      : Number(data.sueno) > 8
-        ? '+2%'
-        : '0%'
+    Number(data.sueno) < 6 ? '-5%' : Number(data.sueno) > 8 ? '+2%' : '0%'
   const deficitFinal = '-10%'
 
   const ajustesRows = [
@@ -736,7 +744,6 @@ function render4Meals(data, numeroOpcionesPlan) {
   const a = data.ajustes || {}
   const c1 = a.comida1 || {}
   const c2n = a.comida2Normal || {}
-  const c2a = a.comida2Avena || {}
   const c3 = a.comida3 || {}
   const c4 = a.comida4 || {}
   const seed = Number(data.randomSeed) || 1
@@ -1269,74 +1276,126 @@ function buildHtml(data) {
         .meal-options-grid,
         .options-grid {
           display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 8px;
-          align-items: start;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 10px;
+          align-items: stretch;
           margin-top: 0;
         }
 
         .meal-options-grid > .option-card:last-child:nth-child(odd),
         .options-grid > .option-card:last-child:nth-child(odd) {
           grid-column: 1 / -1;
-          max-width: calc(50% - 4px);
+          max-width: calc(50% - 5px);
+          width: 100%;
           justify-self: center;
         }
 
         .option-card {
           background: #ffffff;
           border: 1px solid #e5d4c4;
-          border-radius: 12px;
-          padding: 8px;
+          border-radius: 14px;
+          padding: 0;
           break-inside: avoid;
           page-break-inside: avoid;
+          height: 100%;
           min-height: 100%;
           text-align: center;
+          display: flex;
+        }
+
+        .option-card-inner {
+          display: flex;
+          flex-direction: column;
+          width: 100%;
+          min-height: 100%;
+          padding: 9px;
+        }
+
+        .option-title-row {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          min-height: 28px;
+          margin-bottom: 8px;
         }
 
         .option-title {
-          display: inline-block;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
           background: #7b5a43;
           color: #fff;
           border-radius: 999px;
-          padding: 4px 9px;
+          padding: 5px 11px;
+          min-height: 26px;
           font-size: 10px;
           font-weight: 700;
-          margin-bottom: 7px;
+          line-height: 1;
         }
 
         .option-lines {
           display: flex;
           flex-direction: column;
-          gap: 5px;
+          gap: 6px;
+          flex: 1;
+          justify-content: flex-start;
         }
 
         .food-line {
-          display: block;
+          display: flex;
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .food-line-inner {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          min-height: 40px;
         }
 
         .food-pill {
-          display: block;
+          display: flex;
           width: 100%;
+          min-height: 40px;
           background: #f6eee6;
           border: 1px solid #ddc7b5;
           color: #2f241d;
           border-radius: 10px;
-          padding: 6px 7px;
-          font-size: 8.9px;
-          line-height: 1.22;
+          padding: 0;
           text-align: center;
         }
 
+        .food-pill-inner {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          padding: 7px 8px;
+          font-size: 8.9px;
+          line-height: 1.24;
+          text-align: center;
+        }
+
+        .choice-box-wrap {
+          display: flex;
+          flex-direction: column;
+          gap: 5px;
+        }
+
         .choice-box-label {
-          display: inline-block;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          align-self: center;
           background: #fff8f2;
           border: 1px solid #e3cdbc;
           color: #7b5a43;
           border-radius: 999px;
           padding: 2px 8px;
+          min-height: 20px;
           font-size: 8px;
           font-weight: 700;
-          margin: 0 auto 5px;
         }
 
         .choice-box-grid {
@@ -1346,21 +1405,36 @@ function buildHtml(data) {
         }
 
         .choice-box-item {
+          display: flex;
+          min-height: 34px;
           background: #fff;
           border: 1px solid #e3cfbe;
           border-radius: 8px;
-          padding: 5px 6px;
-          font-size: 8.5px;
-          line-height: 1.18;
+          padding: 0;
           color: #4f3728;
         }
 
+        .choice-box-item-inner {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          padding: 6px 7px;
+          font-size: 8.5px;
+          line-height: 1.2;
+          text-align: center;
+        }
+
         .line-separator {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 16px;
           text-align: center;
           font-size: 10px;
           font-weight: 800;
           color: #7b5a43;
-          margin: 4px 0 1px;
+          margin: 3px 0 0;
         }
 
         .footer-space {
