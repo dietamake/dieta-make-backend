@@ -158,9 +158,51 @@ function renderIndicacionesGenerales(items) {
   `
 }
 
-function renderRange(maxPlanOptions, maxMealOptions, renderFn) {
-  const count = Math.min(maxPlanOptions, maxMealOptions)
-  return Array.from({ length: count }, (_, i) => renderFn(i + 1)).join('')
+function hashString(str) {
+  const text = String(str || '')
+  let hash = 2166136261
+
+  for (let i = 0; i < text.length; i += 1) {
+    hash ^= text.charCodeAt(i)
+    hash = Math.imul(hash, 16777619)
+  }
+
+  return hash >>> 0
+}
+
+function createSeededRandom(seed) {
+  let t = seed >>> 0
+  return function random() {
+    t += 0x6d2b79f5
+    let r = Math.imul(t ^ (t >>> 15), 1 | t)
+    r ^= r + Math.imul(r ^ (r >>> 7), 61 | r)
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+function pickRandomStable(items, count, baseSeed, mealKey) {
+  const safeItems = Array.isArray(items) ? [...items] : []
+  const finalCount = Math.min(Math.max(Number(count) || 1, 1), safeItems.length)
+
+  if (finalCount >= safeItems.length) return safeItems
+
+  const seed = ((Number(baseSeed) || 1) + hashString(mealKey)) >>> 0
+  const rng = createSeededRandom(seed)
+
+  for (let i = safeItems.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(rng() * (i + 1))
+    ;[safeItems[i], safeItems[j]] = [safeItems[j], safeItems[i]]
+  }
+
+  return safeItems.slice(0, finalCount)
+}
+
+function renderRandomOptionCards(optionEntries, count, baseSeed, mealKey) {
+  const selected = pickRandomStable(optionEntries, count, baseSeed, mealKey)
+
+  return selected
+    .map((entry, index) => optionCard(`Opción ${index + 1}`, entry.lines))
+    .join('')
 }
 
 function formatObjetivo(data) {
@@ -233,9 +275,19 @@ function renderControlInterno(data) {
 
   let bmr = '-'
   if (data.sexo === 'hombre') {
-    bmr = Math.round(10 * Number(data.peso || 0) + 6.25 * Number(data.altura || 0) - 5 * Number(data.edad || 0) + 5)
+    bmr = Math.round(
+      10 * Number(data.peso || 0) +
+        6.25 * Number(data.altura || 0) -
+        5 * Number(data.edad || 0) +
+        5
+    )
   } else if (data.sexo === 'mujer') {
-    bmr = Math.round(10 * Number(data.peso || 0) + 6.25 * Number(data.altura || 0) - 5 * Number(data.edad || 0) - 161)
+    bmr = Math.round(
+      10 * Number(data.peso || 0) +
+        6.25 * Number(data.altura || 0) -
+        5 * Number(data.edad || 0) -
+        161
+    )
   }
 
   const factorActividad = factoresActividad[data.actividad] || '-'
@@ -246,7 +298,7 @@ function renderControlInterno(data) {
       : Number(data.sueno) > 8
         ? '+2%'
         : '0%'
-  const deficitFinal = '-200 kcal'
+  const deficitFinal = '-10%'
 
   const ajustesRows = [
     ['comida1', JSON.stringify(ajustes.comida1 || {})],
@@ -276,6 +328,8 @@ function renderControlInterno(data) {
           <tr><th>Sueño</th><td>${escapeHtml(formatSueno(data.sueno))} · ajuste ${escapeHtml(ajusteSueno)}</td></tr>
           <tr><th>Ajuste final</th><td>${escapeHtml(deficitFinal)}</td></tr>
           <tr><th>Calorías objetivo</th><td><strong>${escapeHtml(data.caloriasObjetivo || '-')} kcal</strong></td></tr>
+          <tr><th>Seed aleatoria</th><td>${escapeHtml(data.randomSeed || '-')}</td></tr>
+          <tr><th>Número de opciones plan</th><td>${escapeHtml(data.numeroOpcionesPlan || '-')}</td></tr>
         </tbody>
       </table>
 
@@ -414,231 +468,277 @@ function render3Meals(data, numeroOpcionesPlan) {
   const c2 = a.comida2 || {}
   const c3n = a.comida3Normal || {}
   const c3a = a.comida3Avena || {}
+  const seed = Number(data.randomSeed) || 1
 
-  const comida1 = (option) => {
-    const fruta = formatFruitOptionsLine(c1.frutaUnidades)
-    const avena = `${c1.avenaGramos} g Copos de avena`
+  const fruta1 = formatFruitOptionsLine(c1.frutaUnidades)
+  const avena1 = `${c1.avenaGramos} g Copos de avena`
 
-    const options = {
-      1: [
+  const comida1Options = [
+    {
+      key: 'c1_o1',
+      lines: [
         'Café al gusto',
         '500 ml Leche fresca desnatada',
         'Canela ceylán al gusto',
         '10 g Colágeno bovino hidrolizado',
         '1 lata de mejillones al natural o 1 lata escurrida (56 g) de atún al natural o 100 g almejas salvajes o 75 g ostras o 75 g vieiras o 120 g gambas salvajes (puedes combinar dos opciones tomando la mitad de cada una)',
-        fruta,
+        fruta1,
         '50 g Queso de leche cruda o 40 g Chocolate 80-100% o 30 g Mantequilla o 24 g Aceite de coco o 150 g Aguacate o 35 g Nueces de macadamia',
-        avena,
+        avena1,
       ],
-      2: [
+    },
+    {
+      key: 'c1_o2',
+      lines: [
         'Café al gusto',
         '270 g Queso fresco batido desnatado',
         'Canela ceylán al gusto',
         '12 g Colágeno bovino hidrolizado',
-        fruta,
+        fruta1,
         '50 g Queso de leche cruda o 40 g Chocolate 80-100% o 30 g Mantequilla o 50 g Leche condensada + 12 g Aceite de coco o 24 g Aceite de coco o 150 g Aguacate o 35 g Nueces de macadamia',
-        avena,
+        avena1,
       ],
-      3: [
+    },
+    {
+      key: 'c1_o3',
+      lines: [
         'Café al gusto',
         '500 ml Leche fresca desnatada',
         'Canela ceylán al gusto',
         '12 g Colágeno bovino hidrolizado',
         '60 g Hígado de vaca o 60 g Hígado de cordero',
-        fruta,
+        fruta1,
         '50 g Queso de leche cruda o 40 g Chocolate 80-100% o 30 g Mantequilla o 50 g Leche condensada + 12 g Aceite de coco o 24 g Aceite de coco o 150 g Aguacate o 35 g Nueces de macadamia',
-        avena,
+        avena1,
       ],
-      4: [
+    },
+    {
+      key: 'c1_o4',
+      lines: [
         'Café al gusto',
         '250 g Queso fresco desnatado',
         'Canela ceylán al gusto',
         '12 g Colágeno bovino hidrolizado',
-        fruta,
+        fruta1,
         '50 g Queso de leche cruda o 40 g Chocolate 80-100% o 30 g Mantequilla o 50 g Leche condensada + 12 g Aceite de coco o 24 g Aceite de coco o 150 g Aguacate o 35 g Nueces de macadamia',
-        avena,
+        avena1,
       ],
-      5: [
+    },
+    {
+      key: 'c1_o5',
+      lines: [
         'Café al gusto',
         '125 g Queso fresco batido desnatado',
         'Canela ceylán al gusto',
         '12 g Colágeno bovino hidrolizado',
         '150 g Claras de huevo pasteurizadas',
-        fruta,
+        fruta1,
         '50 g Queso de leche cruda o 40 g Chocolate 80-100% o 30 g Mantequilla o 50 g Leche condensada + 12 g Aceite de coco o 24 g Aceite de coco o 150 g Aguacate o 35 g Nueces de macadamia',
-        avena,
+        avena1,
       ],
-      6: [
+    },
+    {
+      key: 'c1_o6',
+      lines: [
         'Café al gusto',
         '200 g Queso fresco batido desnatado',
         'Canela ceylán al gusto',
         '12 g Colágeno bovino hidrolizado',
         '250 ml Leche fresca desnatada',
-        fruta,
+        fruta1,
         '50 g Queso de leche cruda o 40 g Chocolate 80-100% o 30 g Mantequilla o 50 g Leche condensada + 12 g Aceite de coco o 24 g Aceite de coco o 150 g Aguacate o 35 g Nueces de macadamia',
-        avena,
+        avena1,
       ],
-      7: [
+    },
+    {
+      key: 'c1_o7',
+      lines: [
         'Café al gusto',
         '250 ml Leche fresca desnatada',
         'Canela ceylán al gusto',
         '12 g Colágeno bovino hidrolizado',
         '200 g Claras de huevo pasteurizadas',
-        fruta,
+        fruta1,
         '50 g Queso de leche cruda o 40 g Chocolate 80-100% o 30 g Mantequilla o 50 g Leche condensada + 12 g Aceite de coco o 24 g Aceite de coco o 150 g Aguacate o 35 g Nueces de macadamia',
-        avena,
+        avena1,
       ],
-    }
+    },
+  ]
 
-    return optionCard(`Opción ${option}`, options[option])
-  }
+  const fruta2 = formatFruitOptionsLine(c2.frutaUnidades)
+  const pan2 = `${c2.panGramos} g Pan de masa madre`
 
-  const comida2 = (option) => {
-    const fruta = formatFruitOptionsLine(c2.frutaUnidades)
-    const pan = `${c2.panGramos} g Pan de masa madre`
-
-    const options = {
-      1: [
+  const comida2Options = [
+    {
+      key: 'c2_o1',
+      lines: [
         '500 ml Leche fresca desnatada',
         '10 g Colágeno bovino hidrolizado',
         '1 lata de mejillones al natural o 1 lata escurrida (56 g) de atún al natural o 100 g almejas salvajes o 75 g ostras o 75 g vieiras o 120 g gambas salvajes (puedes combinar dos opciones tomando la mitad de cada una)',
-        fruta,
-        pan,
+        fruta2,
+        pan2,
         '5 ml Aceite de oliva virgen extra prensado en frío',
         'Tomate al gusto',
       ],
-      2: [
+    },
+    {
+      key: 'c2_o2',
+      lines: [
         '270 g Queso fresco batido desnatado',
         '12 g Colágeno bovino hidrolizado',
-        fruta,
-        pan,
+        fruta2,
+        pan2,
         '5 ml Aceite de oliva virgen extra prensado en frío',
         'Tomate al gusto',
       ],
-      3: [
+    },
+    {
+      key: 'c2_o3',
+      lines: [
         '500 ml Leche fresca desnatada',
         '12 g Colágeno bovino hidrolizado',
         '60 g Hígado de vaca o 60 g Hígado de cordero',
-        fruta,
-        pan,
+        fruta2,
+        pan2,
         '5 ml Aceite de oliva virgen extra prensado en frío',
         'Tomate al gusto',
       ],
-      4: [
+    },
+    {
+      key: 'c2_o4',
+      lines: [
         '250 g Queso fresco desnatado',
         '12 g Colágeno bovino hidrolizado',
-        fruta,
-        pan,
+        fruta2,
+        pan2,
         '5 ml Aceite de oliva virgen extra prensado en frío',
         'Tomate al gusto',
       ],
-      5: [
+    },
+    {
+      key: 'c2_o5',
+      lines: [
         '125 g Queso fresco batido desnatado',
         '12 g Colágeno bovino hidrolizado',
         '150 g Claras de huevo pasteurizadas',
-        fruta,
-        pan,
+        fruta2,
+        pan2,
         '5 ml Aceite de oliva virgen extra prensado en frío',
         'Tomate al gusto',
       ],
-      6: [
+    },
+    {
+      key: 'c2_o6',
+      lines: [
         '200 g Queso fresco batido desnatado',
         '12 g Colágeno bovino hidrolizado',
         '250 ml Leche fresca desnatada',
-        fruta,
-        pan,
+        fruta2,
+        pan2,
         '5 ml Aceite de oliva virgen extra prensado en frío',
         'Tomate al gusto',
       ],
-      7: [
+    },
+    {
+      key: 'c2_o7',
+      lines: [
         '250 ml Leche fresca desnatada',
         '12 g Colágeno bovino hidrolizado',
         '200 g Claras de huevo pasteurizadas',
-        fruta,
-        pan,
+        fruta2,
+        pan2,
         '5 ml Aceite de oliva virgen extra prensado en frío',
         'Tomate al gusto',
       ],
-    }
+    },
+  ]
 
-    return optionCard(`Opción ${option}`, options[option])
-  }
+  const carb3 = `${c3n.patataGramos} g Patata o ${c3n.boniatoGramos} g Boniato o ${c3n.arrozGramos} g Arroz blanco crudo`
+  const fruta3 = formatFruitOptionsLine(c3n.frutaUnidades)
 
-  const comida3 = (option) => {
-    if (option === 4) {
-      return optionCard('Opción 4', [
+  const comida3Options = [
+    {
+      key: 'c3_o1',
+      lines: [
+        '150 g Carne picada de ternera',
+        '5 g Aceite de coco',
+        carb3,
+        '150 g Pimientos rojos o 150 g Calabacín o 150 g Pepino o 200 g Champiñones (hervir como mínimo durante 1 h)',
+        fruta3,
+        '50 g Queso de leche cruda o 40 g Chocolate 80–100% o 150 g Aguacate o 35 g Nueces de macadamia',
+      ],
+    },
+    {
+      key: 'c3_o2',
+      lines: [
+        '290 g Gambas salvajes o 175 g Ostras o 190 g Pulpo cocido o 185 g Merluza o 245 g Bacalao o 170 g Boquerones salvajes (puedes combinar dos opciones tomando la mitad de la cantidad de cada una)',
+        '8 g Aceite de oliva virgen extra prensado en frío',
+        '5 g Aceite de coco',
+        carb3,
+        '150 g Pimientos rojos o 150 g Calabacín o 150 g Pepino o 200 g Champiñones (hervir como mínimo durante 1 h)',
+        fruta3,
+        '50 g Queso de leche cruda o 40 g Chocolate 80–100% o 150 g Aguacate o 35 g Nueces de macadamia',
+      ],
+    },
+    {
+      key: 'c3_o3',
+      lines: [
+        '140 g Pechuga de pollo o 140 g Pechuga de pavo o 140 g Lomo de cerdo',
+        '7 g Aceite de oliva virgen extra prensado en frío',
+        '5 g Aceite de coco',
+        carb3,
+        '150 g Pimientos rojos o 150 g Calabacín o 150 g Pepino o 200 g Champiñones (hervir como mínimo durante 1 h)',
+        fruta3,
+        '50 g Queso de leche cruda o 40 g Chocolate 80–100% o 150 g Aguacate o 35 g Nueces de macadamia',
+      ],
+    },
+    {
+      key: 'c3_o4',
+      lines: [
         '300 g Queso fresco batido desnatado',
         '11 g Aceite de coco o 20 g Chocolate 80–100%',
         `${c3a.avenaGramos} g Copos de avena (dejar en remojo en agua la noche anterior con un poco de vinagre de sidra de manzana, en recipiente cerrado, lugar oscuro y a temperatura ambiente; después quitar el agua, lavar varias veces y cocinar antes de consumir)`,
         formatFruitOrMielLine(c3a.frutaUnidades, c3a.mielGramos),
         '50 g Queso de leche cruda o 40 g Chocolate 80–100% o 150 g Aguacate o 35 g Nueces de macadamia',
-      ])
-    }
-
-    const carbLine = `${c3n.patataGramos} g Patata o ${c3n.boniatoGramos} g Boniato o ${c3n.arrozGramos} g Arroz blanco crudo`
-    const fruta = formatFruitOptionsLine(c3n.frutaUnidades)
-
-    const options = {
-      1: [
-        '150 g Carne picada de ternera',
-        '5 g Aceite de coco',
-        carbLine,
-        '150 g Pimientos rojos o 150 g Calabacín o 150 g Pepino o 200 g Champiñones (hervir como mínimo durante 1 h)',
-        fruta,
-        '50 g Queso de leche cruda o 40 g Chocolate 80–100% o 150 g Aguacate o 35 g Nueces de macadamia',
       ],
-      2: [
-        '290 g Gambas salvajes o 175 g Ostras o 190 g Pulpo cocido o 185 g Merluza o 245 g Bacalao o 170 g Boquerones salvajes (puedes combinar dos opciones tomando la mitad de la cantidad de cada una)',
-        '8 g Aceite de oliva virgen extra prensado en frío',
-        '5 g Aceite de coco',
-        carbLine,
-        '150 g Pimientos rojos o 150 g Calabacín o 150 g Pepino o 200 g Champiñones (hervir como mínimo durante 1 h)',
-        fruta,
-        '50 g Queso de leche cruda o 40 g Chocolate 80–100% o 150 g Aguacate o 35 g Nueces de macadamia',
-      ],
-      3: [
-        '140 g Pechuga de pollo o 140 g Pechuga de pavo o 140 g Lomo de cerdo',
-        '7 g Aceite de oliva virgen extra prensado en frío',
-        '5 g Aceite de coco',
-        carbLine,
-        '150 g Pimientos rojos o 150 g Calabacín o 150 g Pepino o 200 g Champiñones (hervir como mínimo durante 1 h)',
-        fruta,
-        '50 g Queso de leche cruda o 40 g Chocolate 80–100% o 150 g Aguacate o 35 g Nueces de macadamia',
-      ],
-      5: [
+    },
+    {
+      key: 'c3_o5',
+      lines: [
         '2 huevos enteros + 180 g Claras de huevo',
         '7 g Aceite de oliva virgen extra prensado en frío',
         '5 g Aceite de coco',
-        carbLine,
+        carb3,
         '150 g Pimientos rojos o 150 g Calabacín o 150 g Pepino o 200 g Champiñones (hervir como mínimo durante 1 h)',
-        fruta,
+        fruta3,
         '50 g Queso de leche cruda o 40 g Chocolate 80–100% o 150 g Aguacate o 35 g Nueces de macadamia',
       ],
-      6: [
+    },
+    {
+      key: 'c3_o6',
+      lines: [
         '200 g Salmón',
         '5 g Aceite de oliva virgen extra prensado en frío',
-        carbLine,
+        carb3,
         '150 g Pimientos rojos o 150 g Calabacín o 150 g Pepino o 200 g Champiñones (hervir como mínimo durante 1 h)',
-        fruta,
+        fruta3,
         '35 g Nueces de macadamia o 150 g Aguacate (ligeramente ajustado en grasas para compensar el salmón)',
       ],
-    }
-
-    return optionCard(`Opción ${option}`, options[option])
-  }
+    },
+  ]
 
   return `
     <div class="meal-box">
       <div class="meal-title">COMIDA 1</div>
       <div class="options-grid meal-options-grid">
-        ${renderRange(numeroOpcionesPlan, 7, comida1)}
+        ${renderRandomOptionCards(comida1Options, numeroOpcionesPlan, seed, '3m_comida1')}
       </div>
     </div>
 
     <div class="meal-box">
       <div class="meal-title">COMIDA 2</div>
       <div class="options-grid meal-options-grid">
-        ${renderRange(numeroOpcionesPlan, 7, comida2)}
+        ${renderRandomOptionCards(comida2Options, numeroOpcionesPlan, seed, '3m_comida2')}
       </div>
     </div>
 
@@ -647,7 +747,7 @@ function render3Meals(data, numeroOpcionesPlan) {
       <div class="meal-subtext">5 min antes de empezar a comer: Vinagre de sidra de manzana en pastilla (500 mg)</div>
       <div class="meal-subtext">Al acabar de comer: Bisglicinato de magnesio (2 g)</div>
       <div class="options-grid meal-options-grid">
-        ${renderRange(numeroOpcionesPlan, 6, comida3)}
+        ${renderRandomOptionCards(comida3Options, numeroOpcionesPlan, seed, '3m_comida3')}
       </div>
     </div>
   `
@@ -662,217 +762,265 @@ function render4Meals(data, numeroOpcionesPlan) {
   const c2a = a.comida2Avena || {}
   const c3 = a.comida3 || {}
   const c4 = a.comida4 || {}
+  const seed = Number(data.randomSeed) || 1
 
-  const comida1 = (option) => {
-    const fruta = formatFruitOptionsLine(c1.frutaUnidades)
+  const fruta1 = formatFruitOptionsLine(c1.frutaUnidades)
 
-    const options = {
-      1: [
+  const comida1Options = [
+    {
+      key: 'c1_o1',
+      lines: [
         'Café al gusto',
         '500 ml Leche fresca desnatada',
         'Canela ceylán al gusto',
         '10 g Colágeno bovino hidrolizado',
         '1 lata de mejillones al natural o 1 lata escurrida (56 g) de atún al natural o 100 g almejas salvajes o 75 g ostras o 75 g vieiras o 120 g gambas salvajes (puedes combinar dos opciones tomando la mitad de cada una)',
-        fruta,
+        fruta1,
         '25 g Queso de leche cruda o 20 g Chocolate 80–100% o 15 g Mantequilla o 25 g Leche condensada + 6 g Aceite de coco o 12 g Aceite de coco',
       ],
-      2: [
+    },
+    {
+      key: 'c1_o2',
+      lines: [
         'Café al gusto',
         '270 g Queso fresco batido desnatado',
         'Canela ceylán al gusto',
         '12 g Colágeno bovino hidrolizado',
-        fruta,
+        fruta1,
         '25 g Queso de leche cruda o 20 g Chocolate 80–100% o 15 g Mantequilla o 25 g Leche condensada + 6 g Aceite de coco o 12 g Aceite de coco',
       ],
-      3: [
+    },
+    {
+      key: 'c1_o3',
+      lines: [
         'Café al gusto',
         '500 ml Leche fresca desnatada',
         'Canela ceylán al gusto',
         '12 g Colágeno bovino hidrolizado',
         '60 g Hígado de vaca o 60 g Hígado de cordero',
-        fruta,
+        fruta1,
         '25 g Queso de leche cruda o 20 g Chocolate 80–100% o 15 g Mantequilla o 25 g Leche condensada + 6 g Aceite de coco o 12 g Aceite de coco',
       ],
-      4: [
+    },
+    {
+      key: 'c1_o4',
+      lines: [
         'Café al gusto',
         '250 g Queso fresco desnatado',
         'Canela ceylán al gusto',
         '12 g Colágeno bovino hidrolizado',
-        fruta,
+        fruta1,
         '25 g Queso de leche cruda o 20 g Chocolate 80–100% o 15 g Mantequilla o 25 g Leche condensada + 6 g Aceite de coco o 12 g Aceite de coco',
       ],
-      5: [
+    },
+    {
+      key: 'c1_o5',
+      lines: [
         'Café al gusto',
         '125 g Queso fresco batido desnatado',
         'Canela ceylán al gusto',
         '12 g Colágeno bovino hidrolizado',
         '150 g Claras de huevo pasteurizadas',
-        fruta,
+        fruta1,
         '25 g Queso de leche cruda o 20 g Chocolate 80–100% o 15 g Mantequilla o 25 g Leche condensada + 6 g Aceite de coco o 12 g Aceite de coco',
       ],
-      6: [
+    },
+    {
+      key: 'c1_o6',
+      lines: [
         'Café al gusto',
         '200 g Queso fresco batido desnatado',
         'Canela ceylán al gusto',
         '12 g Colágeno bovino hidrolizado',
         '250 ml Leche fresca desnatada',
-        fruta,
+        fruta1,
         '25 g Queso de leche cruda o 20 g Chocolate 80–100% o 15 g Mantequilla o 25 g Leche condensada + 6 g Aceite de coco o 12 g Aceite de coco',
       ],
-      7: [
+    },
+    {
+      key: 'c1_o7',
+      lines: [
         'Café al gusto',
         '250 ml Leche fresca desnatada',
         'Canela ceylán al gusto',
         '12 g Colágeno bovino hidrolizado',
         '200 g Claras de huevo pasteurizadas',
-        fruta,
+        fruta1,
         '25 g Queso de leche cruda o 20 g Chocolate 80–100% o 15 g Mantequilla o 25 g Leche condensada + 6 g Aceite de coco o 12 g Aceite de coco',
       ],
-    }
+    },
+  ]
 
-    return optionCard(`Opción ${option}`, options[option])
-  }
+  const carb2 = `${c2n.patataGramos} g Patata o ${c2n.boniatoGramos} g Boniato o ${c2n.calabazaGramos} g Calabaza`
+  const fruta2 = formatFruitOptionsLine(c2n.frutaUnidades)
 
-  const comida2 = (option) => {
-    if (option === 5) {
-      return optionCard('Opción 5', [
+  const comida2Options = [
+    {
+      key: 'c2_o1',
+      lines: [
+        '150 g Carne picada de ternera',
+        '5 g Aceite de coco',
+        `${carb2} (puedes combinar dos opciones tomando la mitad de la cantidad de cada una)`,
+        '150 g Pimientos rojos o 150 g Calabacín o 150 g Pepino o 200 g Champiñones (hervir como mínimo durante 1 h)',
+        fruta2,
+        'Tomate, cebolla cruda y/o pimiento verde crudo al gusto',
+      ],
+    },
+    {
+      key: 'c2_o2',
+      lines: [
+        '290 g Gambas salvajes o 175 g Ostras o 190 g Pulpo cocido o 185 g Merluza o 245 g Bacalao o 170 g Boquerones salvajes (puedes combinar dos opciones tomando la mitad de la cantidad de cada una)',
+        '8 g Aceite de oliva virgen extra prensado en frío',
+        '5 g Aceite de coco',
+        `${carb2} (puedes combinar dos opciones tomando la mitad de la cantidad de cada una)`,
+        '150 g Pimientos rojos o 150 g Calabacín o 150 g Pepino o 200 g Champiñones (hervir como mínimo durante 1 h)',
+        fruta2,
+        'Tomate, cebolla cruda y/o pimiento verde crudo al gusto',
+      ],
+    },
+    {
+      key: 'c2_o3',
+      lines: [
+        '140 g Pechuga de pollo o 140 g Pechuga de pavo o 140 g Lomo de cerdo',
+        '7 g Aceite de oliva virgen extra prensado en frío',
+        '5 g Aceite de coco',
+        `${carb2} (puedes combinar dos opciones tomando la mitad de la cantidad de cada una)`,
+        '150 g Pimientos rojos o 150 g Calabacín o 150 g Pepino o 200 g Champiñones (hervir como mínimo durante 1 h)',
+        fruta2,
+        'Tomate, cebolla cruda y/o pimiento verde crudo al gusto',
+      ],
+    },
+    {
+      key: 'c2_o4',
+      lines: [
+        '150 g Claras de huevo pasteurizadas',
+        '2 Huevos',
+        `${carb2} (puedes combinar dos opciones tomando la mitad de la cantidad de cada una)`,
+        '150 g Pimientos rojos o 150 g Calabacín o 150 g Pepino o 200 g Champiñones (hervir como mínimo durante 1 h)',
+        fruta2,
+        'Tomate, cebolla cruda y/o pimiento verde crudo al gusto',
+      ],
+    },
+    {
+      key: 'c2_o5',
+      lines: [
         '300 g Queso fresco batido desnatado',
         '11 g Aceite de coco o 20 g Chocolate 80–100%',
         `${c2a.avenaGramos} g Copos de avena (dejar en remojo en agua la noche anterior, con un poco de vinagre de sidra de manzana, dentro de un recipiente cerrado, en un lugar oscuro y a temperatura ambiente. Quitar el agua, lavar varias veces y cocinar antes de consumir)`,
         formatFruitOrMielLine(c2a.frutaUnidades, c2a.mielGramos),
-      ])
-    }
-
-    const carbLine = `${c2n.patataGramos} g Patata o ${c2n.boniatoGramos} g Boniato o ${c2n.calabazaGramos} g Calabaza`
-    const fruta = formatFruitOptionsLine(c2n.frutaUnidades)
-
-    const options = {
-      1: [
-        '150 g Carne picada de ternera',
-        '5 g Aceite de coco',
-        `${carbLine} (puedes combinar dos opciones tomando la mitad de la cantidad de cada una)`,
-        '150 g Pimientos rojos o 150 g Calabacín o 150 g Pepino o 200 g Champiñones (hervir como mínimo durante 1 h)',
-        fruta,
-        'Tomate, cebolla cruda y/o pimiento verde crudo al gusto',
       ],
-      2: [
-        '290 g Gambas salvajes o 175 g Ostras o 190 g Pulpo cocido o 185 g Merluza o 245 g Bacalao o 170 g Boquerones salvajes (puedes combinar dos opciones tomando la mitad de la cantidad de cada una)',
-        '8 g Aceite de oliva virgen extra prensado en frío',
-        '5 g Aceite de coco',
-        `${carbLine} (puedes combinar dos opciones tomando la mitad de la cantidad de cada una)`,
-        '150 g Pimientos rojos o 150 g Calabacín o 150 g Pepino o 200 g Champiñones (hervir como mínimo durante 1 h)',
-        fruta,
-        'Tomate, cebolla cruda y/o pimiento verde crudo al gusto',
-      ],
-      3: [
-        '140 g Pechuga de pollo o 140 g Pechuga de pavo o 140 g Lomo de cerdo',
-        '7 g Aceite de oliva virgen extra prensado en frío',
-        '5 g Aceite de coco',
-        `${carbLine} (puedes combinar dos opciones tomando la mitad de la cantidad de cada una)`,
-        '150 g Pimientos rojos o 150 g Calabacín o 150 g Pepino o 200 g Champiñones (hervir como mínimo durante 1 h)',
-        fruta,
-        'Tomate, cebolla cruda y/o pimiento verde crudo al gusto',
-      ],
-      4: [
-        '150 g Claras de huevo pasteurizadas',
-        '2 Huevos',
-        `${carbLine} (puedes combinar dos opciones tomando la mitad de la cantidad de cada una)`,
-        '150 g Pimientos rojos o 150 g Calabacín o 150 g Pepino o 200 g Champiñones (hervir como mínimo durante 1 h)',
-        fruta,
-        'Tomate, cebolla cruda y/o pimiento verde crudo al gusto',
-      ],
-    }
+    },
+  ]
 
-    return optionCard(`Opción ${option}`, options[option])
-  }
+  const fruta3 = formatFruitOptionsLine(c3.frutaUnidades)
 
-  const comida3 = (option) => {
-    const fruta = formatFruitOptionsLine(c3.frutaUnidades)
-
-    const options = {
-      1: [
+  const comida3Options = [
+    {
+      key: 'c3_o1',
+      lines: [
         'Café al gusto',
         '500 ml Leche fresca desnatada',
         '10 g Colágeno bovino hidrolizado',
         '1 lata de mejillones al natural o 1 lata escurrida (56 g) de atún al natural o 100 g almejas salvajes o 75 g ostras o 75 g vieiras o 120 g gambas salvajes (puedes combinar dos opciones tomando la mitad de cada una)',
-        fruta,
+        fruta3,
       ],
-      2: [
+    },
+    {
+      key: 'c3_o2',
+      lines: [
         'Café al gusto',
         '270 g Queso fresco batido desnatado',
         '12 g Colágeno bovino hidrolizado',
-        fruta,
+        fruta3,
       ],
-      3: [
+    },
+    {
+      key: 'c3_o3',
+      lines: [
         'Café al gusto',
         '500 ml Leche fresca desnatada',
         '12 g Colágeno bovino hidrolizado',
         '60 g Hígado de vaca o 60 g Hígado de cordero',
-        fruta,
+        fruta3,
       ],
-      4: [
+    },
+    {
+      key: 'c3_o4',
+      lines: [
         'Café al gusto',
         '250 g Queso fresco desnatado',
         '12 g Colágeno bovino hidrolizado',
-        fruta,
+        fruta3,
       ],
-      5: [
+    },
+    {
+      key: 'c3_o5',
+      lines: [
         'Café al gusto',
         '125 g Queso fresco batido desnatado',
         '12 g Colágeno bovino hidrolizado',
         '150 g Claras de huevo pasteurizadas',
-        fruta,
+        fruta3,
       ],
-      6: [
+    },
+    {
+      key: 'c3_o6',
+      lines: [
         'Café al gusto',
         '200 g Queso fresco batido desnatado',
         '12 g Colágeno bovino hidrolizado',
         '250 ml Leche fresca desnatada',
-        fruta,
+        fruta3,
       ],
-      7: [
+    },
+    {
+      key: 'c3_o7',
+      lines: [
         'Café al gusto',
         '250 ml Leche fresca desnatada',
         '12 g Colágeno bovino hidrolizado',
         '200 g Claras de huevo pasteurizadas',
-        fruta,
+        fruta3,
       ],
-    }
+    },
+  ]
 
-    return optionCard(`Opción ${option}`, options[option])
-  }
+  const fruitOrMiel4 = formatFruitOrMielLine(c4.frutaUnidades, c4.mielGramos)
 
-  const comida4 = (option) => {
-    const fruitOrMiel = formatFruitOrMielLine(c4.frutaUnidades, c4.mielGramos)
-
-    const options = {
-      1: [
+  const comida4Options = [
+    {
+      key: 'c4_o1',
+      lines: [
         '200 g Yogur entero de leche de cabra',
-        `${fruitOrMiel} (puedes combinar dos opciones tomando la mitad de cada una)`,
+        `${fruitOrMiel4} (puedes combinar dos opciones tomando la mitad de cada una)`,
         '10 g Chocolate 80–100% o 7 g Mantequilla',
         '10 g Colágeno bovino hidrolizado',
         'Canela ceylán al gusto',
         '1 Zanahoria cruda pelada',
         '3 g Aceite de coco o 3 g Aceite de oliva virgen extra prensado en frío',
       ],
-      2: [
+    },
+    {
+      key: 'c4_o2',
+      lines: [
         '125 g Helado “Haggen Dazs”',
         '10 g Colágeno bovino hidrolizado',
         '1 Zanahoria cruda pelada',
         '3 g Aceite de coco o 3 g Aceite de oliva virgen extra prensado en frío',
       ],
-      3: [
+    },
+    {
+      key: 'c4_o3',
+      lines: [
         '25 g Queso de leche cruda',
-        `${fruitOrMiel} (puedes combinar dos opciones tomando la mitad de cada una)`,
+        `${fruitOrMiel4} (puedes combinar dos opciones tomando la mitad de cada una)`,
         '10 g Chocolate 80–100% o 7 g Mantequilla',
         '100 ml Zumo de frutas a elegir + 10 g Colágeno bovino hidrolizado',
         '1 Zanahoria cruda pelada',
         '3 g Aceite de coco o 3 g Aceite de oliva virgen extra prensado en frío',
       ],
-    }
-
-    return optionCard(`Opción ${option}`, options[option])
-  }
+    },
+  ]
 
   return `
     <div class="meal-box">
@@ -880,7 +1028,7 @@ function render4Meals(data, numeroOpcionesPlan) {
       <div class="meal-subtext">5–10 min antes de empezar a comer, con todas las opciones: 10 g Jengibre crudo pelado (masticar hasta poder tragar sin agua)</div>
       <div class="meal-subtext">Al acabar de comer, con todas las opciones: 1 g Bisglicinato de magnesio</div>
       <div class="options-grid meal-options-grid">
-        ${renderRange(numeroOpcionesPlan, 7, comida1)}
+        ${renderRandomOptionCards(comida1Options, numeroOpcionesPlan, seed, '4m_comida1')}
       </div>
     </div>
 
@@ -889,7 +1037,7 @@ function render4Meals(data, numeroOpcionesPlan) {
       <div class="meal-subtext">5–10 min antes de empezar a comer, con todas las opciones: 500 mg Vinagre de sidra de manzana en pastilla</div>
       <div class="meal-subtext">Al acabar de comer, con todas las opciones: 1 g Bisglicinato de magnesio</div>
       <div class="options-grid meal-options-grid">
-        ${renderRange(numeroOpcionesPlan, 5, comida2)}
+        ${renderRandomOptionCards(comida2Options, numeroOpcionesPlan, seed, '4m_comida2')}
       </div>
     </div>
 
@@ -897,7 +1045,7 @@ function render4Meals(data, numeroOpcionesPlan) {
       <div class="meal-title">COMIDA 3</div>
       <div class="meal-subtext">Al acabar de comer, con todas las opciones: 1 g Bisglicinato de magnesio</div>
       <div class="options-grid meal-options-grid">
-        ${renderRange(numeroOpcionesPlan, 7, comida3)}
+        ${renderRandomOptionCards(comida3Options, numeroOpcionesPlan, seed, '4m_comida3')}
       </div>
     </div>
 
@@ -905,7 +1053,7 @@ function render4Meals(data, numeroOpcionesPlan) {
       <div class="meal-title">COMIDA 4</div>
       <div class="meal-subtext">Al acabar de comer, con todas las opciones: 2 g Bisglicinato de magnesio</div>
       <div class="options-grid meal-options-grid">
-        ${renderRange(numeroOpcionesPlan, 3, comida4)}
+        ${renderRandomOptionCards(comida4Options, numeroOpcionesPlan, seed, '4m_comida4')}
       </div>
     </div>
   `
@@ -913,7 +1061,9 @@ function render4Meals(data, numeroOpcionesPlan) {
 
 function buildHtml(data) {
   const numeroOpcionesPlan =
-    data.numeroOpcionesPlan === 5 || data.numeroOpcionesPlan === 7 ? data.numeroOpcionesPlan : 1
+    data.numeroOpcionesPlan === 2 || data.numeroOpcionesPlan === 3
+      ? data.numeroOpcionesPlan
+      : 1
 
   const ajustesPersonalizados = data.ajustesPersonalizados || {
     ultimaComidaTexto: [],
