@@ -1051,7 +1051,7 @@ function buildHtml(data) {
       <style>
         @page {
           size: A4;
-          margin: 8mm;
+          margin: 7mm;
         }
 
         * {
@@ -1064,8 +1064,8 @@ function buildHtml(data) {
           font-family: Arial, sans-serif;
           color: #2f241d;
           background: #ffffff;
-          line-height: 1.28;
-          font-size: 9.4px;
+          line-height: 1.22;
+          font-size: 9px;
           -webkit-print-color-adjust: exact;
           print-color-adjust: exact;
         }
@@ -1078,11 +1078,11 @@ function buildHtml(data) {
           width: 100%;
           background: #ffffff;
           border-radius: 18px;
-          padding: 6px;
+          padding: 4px;
         }
 
         .cover {
-          min-height: 279mm;
+          min-height: 281mm;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -1091,7 +1091,7 @@ function buildHtml(data) {
             linear-gradient(180deg, #f4e9df 0%, #ecdfd2 100%);
           border: 1px solid #dcc5b2;
           border-radius: 22px;
-          padding: 12mm;
+          padding: 11mm;
           page-break-after: always;
         }
 
@@ -1100,101 +1100,101 @@ function buildHtml(data) {
           background: rgba(255, 251, 247, 0.82);
           border: 1px solid #e2cfbf;
           border-radius: 18px;
-          padding: 14px;
+          padding: 13px;
           box-shadow: 0 8px 24px rgba(91, 67, 51, 0.08);
         }
 
         .cover-brand {
           text-align: center;
-          font-size: 42px;
+          font-size: 40px;
           font-weight: 800;
           letter-spacing: 3px;
           color: #7b5a43;
-          margin-bottom: 6px;
+          margin-bottom: 5px;
         }
 
         .cover-brand-line {
-          width: 110px;
+          width: 106px;
           height: 4px;
           background: #b08968;
           border-radius: 999px;
-          margin: 0 auto 14px;
+          margin: 0 auto 12px;
         }
 
         .cover-plan-name {
           text-align: center;
-          font-size: 20px;
-          line-height: 1.12;
+          font-size: 19px;
+          line-height: 1.1;
           color: #4d3527;
           font-weight: 700;
-          margin-bottom: 8px;
+          margin-bottom: 7px;
         }
 
         .cover-description {
           text-align: center;
-          font-size: 11px;
+          font-size: 10.4px;
           color: #6d5646;
-          line-height: 1.45;
-          margin: 0 auto 12px;
+          line-height: 1.35;
+          margin: 0 auto 10px;
           max-width: 130mm;
         }
 
         .cover-profile-grid {
           display: grid;
           grid-template-columns: 1fr 1fr 1fr;
-          gap: 8px;
+          gap: 7px;
         }
 
         .cover-profile-item {
           background: #fbf6f1;
           border: 1px solid #e1cdbc;
-          border-radius: 12px;
-          padding: 8px 9px;
-          min-height: 50px;
+          border-radius: 11px;
+          padding: 7px 8px;
+          min-height: 46px;
         }
 
         .cover-profile-label {
-          font-size: 8px;
+          font-size: 7.6px;
           font-weight: 700;
           text-transform: uppercase;
-          letter-spacing: 0.45px;
+          letter-spacing: 0.42px;
           color: #8a6a55;
           margin-bottom: 3px;
           text-align: center;
         }
 
         .cover-profile-value {
-          font-size: 9.4px;
+          font-size: 9px;
           color: #2f241d;
           font-weight: 600;
-          line-height: 1.28;
+          line-height: 1.2;
           text-align: center;
         }
 
         .cover-summary {
-          margin-top: 10px;
+          margin-top: 9px;
           background: #f7eee6;
           border: 1px solid #e7d7ca;
-          border-radius: 12px;
-          padding: 8px 10px;
+          border-radius: 11px;
+          padding: 7px 9px;
           color: #5b4333;
           text-align: center;
-          font-size: 9.6px;
-          line-height: 1.4;
+          font-size: 9px;
+          line-height: 1.3;
         }
 
         .section-stack {
           display: grid;
           grid-template-columns: 1fr;
-          gap: 10px;
-          margin-bottom: 10px;
+          gap: 7px;
+          margin-bottom: 8px;
         }
 
         .card {
           background: #fffaf5;
           border: 1px solid #e2d1c2;
-          border-radius: 14px;
-          padding: 10px;
+          border-radius: 12px;
+          padding: 8px;
           box-shadow: 0 2px 6px rgba(123, 90, 67, 0.05);
         }
 
@@ -1203,9 +1203,9 @@ function buildHtml(data) {
         }
 
         .section-title {
-          font-size: 13px;
+          font-size: 11.5px;
           font-weight: 700;
-          margin: 0 0 8px;
+          margin: 0 0 6px;
           color: #6e4d39;
           text-align: center;
         }
@@ -1213,70 +1213,73 @@ function buildHtml(data) {
         .notes-list {
           display: flex;
           flex-direction: column;
-          gap: 6px;
+          gap: 4px;
         }
 
         .note-item {
           display: flex;
-          gap: 7px;
+          gap: 6px;
           align-items: flex-start;
           background: #f7ede4;
           border: 1px solid #e7d7ca;
-          border-radius: 10px;
-          padding: 7px 8px;
+          border-radius: 9px;
+          padding: 5px 6px;
+          font-size: 8.3px;
+          line-height: 1.18;
         }
 
         .note-dot {
-          width: 7px;
-          height: 7px;
-          min-width: 7px;
+          width: 6px;
+          height: 6px;
+          min-width: 6px;
           border-radius: 50%;
           background: #b08968;
-          margin-top: 3px;
+          margin-top: 2px;
         }
 
         .meal-box {
           background: linear-gradient(180deg, #fffaf5 0%, #fffdfb 100%);
           border: 1px solid #deccb9;
-          border-radius: 18px;
-          padding: 14px;
-          margin-bottom: 12px;
+          border-radius: 16px;
+          padding: 10px;
+          margin-bottom: 8px;
           break-inside: avoid;
           page-break-inside: avoid;
           box-shadow: 0 6px 16px rgba(123, 90, 67, 0.05);
         }
 
         .meal-title {
-          font-size: 15px;
+          font-size: 13.8px;
           font-weight: 800;
           color: #5f4332;
-          margin-bottom: 12px;
+          margin-bottom: 7px;
           text-align: center;
-          letter-spacing: 0.6px;
+          letter-spacing: 0.55px;
         }
 
         .meal-subtext {
-          font-size: 8.8px;
+          font-size: 8px;
           color: #725947;
           background: #f4e7db;
           border: 1px solid #e3cfbe;
-          border-radius: 8px;
-          padding: 5px 7px;
-          margin-bottom: 6px;
+          border-radius: 7px;
+          padding: 3px 5px;
+          margin-bottom: 3px;
           text-align: center;
+          line-height: 1.12;
         }
 
         .meal-options-grid,
         .options-grid {
           display: grid;
-          gap: 12px;
+          gap: 7px;
           align-items: stretch;
-          margin-top: 2px;
+          margin-top: 1px;
         }
 
         .options-count-1 {
           grid-template-columns: 1fr;
-          max-width: 60%;
+          max-width: 53%;
           margin: 0 auto;
         }
 
@@ -1292,7 +1295,7 @@ function buildHtml(data) {
           position: relative;
           background: linear-gradient(180deg, #fffdfb 0%, #fffaf6 100%);
           border: 1px solid #e6d4c4;
-          border-radius: 18px;
+          border-radius: 14px;
           padding: 0;
           break-inside: avoid;
           page-break-inside: avoid;
@@ -1301,7 +1304,7 @@ function buildHtml(data) {
           text-align: center;
           display: flex;
           box-shadow:
-            0 8px 18px rgba(91, 67, 51, 0.06),
+            0 6px 14px rgba(91, 67, 51, 0.05),
             inset 0 1px 0 rgba(255,255,255,0.65);
           overflow: hidden;
         }
@@ -1310,9 +1313,9 @@ function buildHtml(data) {
           content: "";
           position: absolute;
           top: 0;
-          left: 14px;
-          right: 14px;
-          height: 3px;
+          left: 12px;
+          right: 12px;
+          height: 2px;
           border-radius: 999px;
           background: linear-gradient(90deg, #b08968 0%, #d7bda7 100%);
         }
@@ -1322,15 +1325,15 @@ function buildHtml(data) {
           flex-direction: column;
           width: 100%;
           min-height: 100%;
-          padding: 12px 10px 10px;
+          padding: 8px 6px 6px;
         }
 
         .option-title-row {
           display: flex;
           justify-content: center;
           align-items: center;
-          min-height: 34px;
-          margin-bottom: 10px;
+          min-height: 26px;
+          margin-bottom: 5px;
         }
 
         .option-title {
@@ -1340,19 +1343,19 @@ function buildHtml(data) {
           background: linear-gradient(180deg, #7b5a43 0%, #684936 100%);
           color: #fff;
           border-radius: 999px;
-          padding: 6px 14px;
-          min-height: 28px;
-          font-size: 9.8px;
+          padding: 4px 10px;
+          min-height: 22px;
+          font-size: 8.7px;
           font-weight: 700;
           line-height: 1;
-          letter-spacing: 0.3px;
-          box-shadow: 0 4px 10px rgba(91, 67, 51, 0.14);
+          letter-spacing: 0.2px;
+          box-shadow: 0 3px 8px rgba(91, 67, 51, 0.12);
         }
 
         .option-lines {
           display: flex;
           flex-direction: column;
-          gap: 6px;
+          gap: 3px;
           flex: 1;
           justify-content: flex-start;
         }
@@ -1367,17 +1370,17 @@ function buildHtml(data) {
           display: flex;
           flex-direction: column;
           justify-content: center;
-          min-height: 40px;
+          min-height: 27px;
         }
 
         .food-pill {
           display: flex;
           width: 100%;
-          min-height: 42px;
+          min-height: 28px;
           background: linear-gradient(180deg, #f8f1ea 0%, #f4ebe2 100%);
           border: 1px solid #dfcab8;
           color: #2f241d;
-          border-radius: 12px;
+          border-radius: 9px;
           padding: 0;
           text-align: center;
           box-shadow: inset 0 1px 0 rgba(255,255,255,0.55);
@@ -1388,16 +1391,16 @@ function buildHtml(data) {
           align-items: center;
           justify-content: center;
           width: 100%;
-          padding: 7px 8px;
-          font-size: 8.9px;
-          line-height: 1.24;
+          padding: 3px 4px;
+          font-size: 7.6px;
+          line-height: 1.08;
           text-align: center;
         }
 
         .choice-box-wrap {
           display: flex;
           flex-direction: column;
-          gap: 5px;
+          gap: 2px;
         }
 
         .choice-box-label {
@@ -1409,24 +1412,24 @@ function buildHtml(data) {
           border: 1px solid #e3cdbc;
           color: #7b5a43;
           border-radius: 999px;
-          padding: 2px 8px;
-          min-height: 20px;
-          font-size: 8px;
+          padding: 1px 6px;
+          min-height: 15px;
+          font-size: 6.8px;
           font-weight: 700;
         }
 
         .choice-box-grid {
           display: grid;
           grid-template-columns: 1fr;
-          gap: 4px;
+          gap: 2px;
         }
 
         .choice-box-item {
           display: flex;
-          min-height: 36px;
+          min-height: 22px;
           background: linear-gradient(180deg, #ffffff 0%, #fdf8f3 100%);
           border: 1px solid #e3cfbe;
-          border-radius: 10px;
+          border-radius: 8px;
           padding: 0;
           color: #4f3728;
           box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
@@ -1437,9 +1440,9 @@ function buildHtml(data) {
           align-items: center;
           justify-content: center;
           width: 100%;
-          padding: 6px 7px;
-          font-size: 8.5px;
-          line-height: 1.2;
+          padding: 3px 4px;
+          font-size: 7px;
+          line-height: 1.06;
           text-align: center;
         }
 
@@ -1447,24 +1450,67 @@ function buildHtml(data) {
           display: flex;
           align-items: center;
           justify-content: center;
-          min-height: 16px;
+          min-height: 8px;
           text-align: center;
-          font-size: 10px;
+          font-size: 8px;
           font-weight: 800;
           color: #7b5a43;
-          margin: 3px 0 0;
+          margin: 0;
+        }
+
+        .options-count-1 .food-pill-inner {
+          font-size: 7.8px;
+          line-height: 1.1;
+        }
+
+        .options-count-2 .food-pill-inner {
+          font-size: 7.4px;
+          line-height: 1.06;
+        }
+
+        .options-count-2 .choice-box-item-inner {
+          font-size: 6.9px;
+          line-height: 1.05;
         }
 
         .options-count-3 .food-pill-inner {
-          font-size: 8.3px;
+          font-size: 6.8px;
+          line-height: 1.03;
+          padding: 3px 3px;
         }
 
         .options-count-3 .choice-box-item-inner {
-          font-size: 8px;
+          font-size: 6.3px;
+          line-height: 1.02;
+          padding: 3px 3px;
+        }
+
+        .options-count-3 .option-lines {
+          gap: 2px;
+        }
+
+        .options-count-3 .food-line-inner {
+          min-height: 23px;
+        }
+
+        .options-count-3 .food-pill {
+          min-height: 24px;
+          border-radius: 8px;
+        }
+
+        .options-count-3 .choice-box-item {
+          min-height: 20px;
+          border-radius: 7px;
+        }
+
+        .options-count-3 .choice-box-label {
+          min-height: 14px;
+          font-size: 6.4px;
+          padding: 1px 5px;
         }
 
         .footer-space {
-          height: 2px;
+          height: 1px;
         }
 
         .internal-card {
@@ -1473,25 +1519,25 @@ function buildHtml(data) {
         }
 
         .internal-subtitle {
-          font-size: 11px;
+          font-size: 10px;
           font-weight: 700;
           color: #6b4b36;
-          margin: 10px 0 6px;
+          margin: 8px 0 4px;
         }
 
         .internal-table {
           width: 100%;
           border-collapse: collapse;
-          margin-bottom: 8px;
+          margin-bottom: 6px;
           table-layout: fixed;
         }
 
         .internal-table th,
         .internal-table td {
           border: 1px solid #dcc8b7;
-          padding: 6px 7px;
-          font-size: 8.4px;
-          line-height: 1.2;
+          padding: 4px 5px;
+          font-size: 7.5px;
+          line-height: 1.08;
           vertical-align: top;
           text-align: left;
           word-break: break-word;
@@ -1505,7 +1551,7 @@ function buildHtml(data) {
 
         .mono-cell {
           font-family: "Courier New", monospace;
-          font-size: 7.8px;
+          font-size: 7px;
         }
       </style>
     </head>
