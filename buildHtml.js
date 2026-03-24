@@ -211,10 +211,15 @@ function pickRandomStable(items, count, baseSeed, mealKey) {
 
 function renderRandomOptionCards(optionEntries, count, baseSeed, mealKey) {
   const selected = pickRandomStable(optionEntries, count, baseSeed, mealKey)
+  const layoutClass = `options-count-${selected.length}`
 
-  return selected
-    .map((entry, index) => optionCard(`Opción ${index + 1}`, entry.lines))
-    .join('')
+  return `
+    <div class="options-grid meal-options-grid ${layoutClass}">
+      ${selected
+        .map((entry, index) => optionCard(`Opción ${index + 1}`, entry.lines))
+        .join('')}
+    </div>
+  `
 }
 
 function formatObjetivo(data) {
@@ -715,25 +720,19 @@ function render3Meals(data, numeroOpcionesPlan) {
   return `
     <div class="meal-box">
       <div class="meal-title">COMIDA 1</div>
-      <div class="options-grid meal-options-grid">
-        ${renderRandomOptionCards(comida1Options, numeroOpcionesPlan, seed, '3m_comida1')}
-      </div>
+      ${renderRandomOptionCards(comida1Options, numeroOpcionesPlan, seed, '3m_comida1')}
     </div>
 
     <div class="meal-box">
       <div class="meal-title">COMIDA 2</div>
-      <div class="options-grid meal-options-grid">
-        ${renderRandomOptionCards(comida2Options, numeroOpcionesPlan, seed, '3m_comida2')}
-      </div>
+      ${renderRandomOptionCards(comida2Options, numeroOpcionesPlan, seed, '3m_comida2')}
     </div>
 
     <div class="meal-box">
       <div class="meal-title">COMIDA 3</div>
       <div class="meal-subtext">5 min antes de empezar a comer: Vinagre de sidra de manzana en pastilla (500 mg)</div>
       <div class="meal-subtext">Al acabar de comer: Bisglicinato de magnesio (2 g)</div>
-      <div class="options-grid meal-options-grid">
-        ${renderRandomOptionCards(comida3Options, numeroOpcionesPlan, seed, '3m_comida3')}
-      </div>
+      ${renderRandomOptionCards(comida3Options, numeroOpcionesPlan, seed, '3m_comida3')}
     </div>
   `
 }
@@ -1002,34 +1001,26 @@ function render4Meals(data, numeroOpcionesPlan) {
       <div class="meal-title">COMIDA 1</div>
       <div class="meal-subtext">5–10 min antes de empezar a comer, con todas las opciones: 10 g Jengibre crudo pelado (masticar hasta poder tragar sin agua)</div>
       <div class="meal-subtext">Al acabar de comer, con todas las opciones: 1 g Bisglicinato de magnesio</div>
-      <div class="options-grid meal-options-grid">
-        ${renderRandomOptionCards(comida1Options, numeroOpcionesPlan, seed, '4m_comida1')}
-      </div>
+      ${renderRandomOptionCards(comida1Options, numeroOpcionesPlan, seed, '4m_comida1')}
     </div>
 
     <div class="meal-box">
       <div class="meal-title">COMIDA 2</div>
       <div class="meal-subtext">5–10 min antes de empezar a comer, con todas las opciones: 500 mg Vinagre de sidra de manzana en pastilla</div>
       <div class="meal-subtext">Al acabar de comer, con todas las opciones: 1 g Bisglicinato de magnesio</div>
-      <div class="options-grid meal-options-grid">
-        ${renderRandomOptionCards(comida2Options, numeroOpcionesPlan, seed, '4m_comida2')}
-      </div>
+      ${renderRandomOptionCards(comida2Options, numeroOpcionesPlan, seed, '4m_comida2')}
     </div>
 
     <div class="meal-box">
       <div class="meal-title">COMIDA 3</div>
       <div class="meal-subtext">Al acabar de comer, con todas las opciones: 1 g Bisglicinato de magnesio</div>
-      <div class="options-grid meal-options-grid">
-        ${renderRandomOptionCards(comida3Options, numeroOpcionesPlan, seed, '4m_comida3')}
-      </div>
+      ${renderRandomOptionCards(comida3Options, numeroOpcionesPlan, seed, '4m_comida3')}
     </div>
 
     <div class="meal-box">
       <div class="meal-title">COMIDA 4</div>
       <div class="meal-subtext">Al acabar de comer, con todas las opciones: 2 g Bisglicinato de magnesio</div>
-      <div class="options-grid meal-options-grid">
-        ${renderRandomOptionCards(comida4Options, numeroOpcionesPlan, seed, '4m_comida4')}
-      </div>
+      ${renderRandomOptionCards(comida4Options, numeroOpcionesPlan, seed, '4m_comida4')}
     </div>
   `
 }
@@ -1245,21 +1236,23 @@ function buildHtml(data) {
         }
 
         .meal-box {
-          background: #fffaf5;
+          background: linear-gradient(180deg, #fffaf5 0%, #fffdfb 100%);
           border: 1px solid #deccb9;
-          border-radius: 14px;
-          padding: 10px;
-          margin-bottom: 10px;
+          border-radius: 18px;
+          padding: 14px;
+          margin-bottom: 12px;
           break-inside: avoid;
           page-break-inside: avoid;
+          box-shadow: 0 6px 16px rgba(123, 90, 67, 0.05);
         }
 
         .meal-title {
-          font-size: 14px;
+          font-size: 15px;
           font-weight: 800;
-          color: #6b4b36;
-          margin-bottom: 10px;
+          color: #5f4332;
+          margin-bottom: 12px;
           text-align: center;
+          letter-spacing: 0.6px;
         }
 
         .meal-subtext {
@@ -1276,24 +1269,30 @@ function buildHtml(data) {
         .meal-options-grid,
         .options-grid {
           display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 10px;
+          gap: 12px;
           align-items: stretch;
-          margin-top: 0;
+          margin-top: 2px;
         }
 
-        .meal-options-grid > .option-card:last-child:nth-child(odd),
-        .options-grid > .option-card:last-child:nth-child(odd) {
-          grid-column: 1 / -1;
-          max-width: calc(50% - 5px);
-          width: 100%;
-          justify-self: center;
+        .options-count-1 {
+          grid-template-columns: 1fr;
+          max-width: 60%;
+          margin: 0 auto;
+        }
+
+        .options-count-2 {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .options-count-3 {
+          grid-template-columns: repeat(3, 1fr);
         }
 
         .option-card {
-          background: #ffffff;
-          border: 1px solid #e5d4c4;
-          border-radius: 14px;
+          position: relative;
+          background: linear-gradient(180deg, #fffdfb 0%, #fffaf6 100%);
+          border: 1px solid #e6d4c4;
+          border-radius: 18px;
           padding: 0;
           break-inside: avoid;
           page-break-inside: avoid;
@@ -1301,6 +1300,21 @@ function buildHtml(data) {
           min-height: 100%;
           text-align: center;
           display: flex;
+          box-shadow:
+            0 8px 18px rgba(91, 67, 51, 0.06),
+            inset 0 1px 0 rgba(255,255,255,0.65);
+          overflow: hidden;
+        }
+
+        .option-card::before {
+          content: "";
+          position: absolute;
+          top: 0;
+          left: 14px;
+          right: 14px;
+          height: 3px;
+          border-radius: 999px;
+          background: linear-gradient(90deg, #b08968 0%, #d7bda7 100%);
         }
 
         .option-card-inner {
@@ -1308,29 +1322,31 @@ function buildHtml(data) {
           flex-direction: column;
           width: 100%;
           min-height: 100%;
-          padding: 9px;
+          padding: 12px 10px 10px;
         }
 
         .option-title-row {
           display: flex;
           justify-content: center;
           align-items: center;
-          min-height: 28px;
-          margin-bottom: 8px;
+          min-height: 34px;
+          margin-bottom: 10px;
         }
 
         .option-title {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          background: #7b5a43;
+          background: linear-gradient(180deg, #7b5a43 0%, #684936 100%);
           color: #fff;
           border-radius: 999px;
-          padding: 5px 11px;
-          min-height: 26px;
-          font-size: 10px;
+          padding: 6px 14px;
+          min-height: 28px;
+          font-size: 9.8px;
           font-weight: 700;
           line-height: 1;
+          letter-spacing: 0.3px;
+          box-shadow: 0 4px 10px rgba(91, 67, 51, 0.14);
         }
 
         .option-lines {
@@ -1357,13 +1373,14 @@ function buildHtml(data) {
         .food-pill {
           display: flex;
           width: 100%;
-          min-height: 40px;
-          background: #f6eee6;
-          border: 1px solid #ddc7b5;
+          min-height: 42px;
+          background: linear-gradient(180deg, #f8f1ea 0%, #f4ebe2 100%);
+          border: 1px solid #dfcab8;
           color: #2f241d;
-          border-radius: 10px;
+          border-radius: 12px;
           padding: 0;
           text-align: center;
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.55);
         }
 
         .food-pill-inner {
@@ -1406,12 +1423,13 @@ function buildHtml(data) {
 
         .choice-box-item {
           display: flex;
-          min-height: 34px;
-          background: #fff;
+          min-height: 36px;
+          background: linear-gradient(180deg, #ffffff 0%, #fdf8f3 100%);
           border: 1px solid #e3cfbe;
-          border-radius: 8px;
+          border-radius: 10px;
           padding: 0;
           color: #4f3728;
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
         }
 
         .choice-box-item-inner {
@@ -1435,6 +1453,14 @@ function buildHtml(data) {
           font-weight: 800;
           color: #7b5a43;
           margin: 3px 0 0;
+        }
+
+        .options-count-3 .food-pill-inner {
+          font-size: 8.3px;
+        }
+
+        .options-count-3 .choice-box-item-inner {
+          font-size: 8px;
         }
 
         .footer-space {
