@@ -608,7 +608,7 @@ function generarPlanComidas(numeroComidas, caloriasObjetivo) {
 }
 
 function getDietPlan(data) {
-  const comidasDia = Math.min(Math.max(Number(data.comidasDia) || 3, 3), 4)
+const comidasDia = Number(data.comidasDia) === 4 ? 4 : 3
   const planGenerado = generarPlanComidas(comidasDia, data.caloriasObjetivo)
 
   return {
