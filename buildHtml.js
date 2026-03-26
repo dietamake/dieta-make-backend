@@ -285,9 +285,9 @@ function renderControlInterno(data) {
   }
 
   const factoresGrasa = {
-    muy_tapado: 0.8,
-    normal: 0.85,
-    marcado: 0.9,
+    muy_tapado: 0.93,
+    normal: 0.97,
+    marcado: 1,
   }
 
   let bmr = '-'
@@ -441,6 +441,11 @@ function renderCover(data) {
   return `
     <section class="cover">
       <div class="cover-shell">
+        <div class="cover-top-pill">
+          <span class="cover-top-dot"></span>
+          <span>DIETA PERSONALIZADA</span>
+        </div>
+
         <div class="cover-brand">DIETA MAKE</div>
         <div class="cover-brand-line"></div>
 
@@ -1062,7 +1067,7 @@ function buildHtml(data) {
           margin: 0;
           padding: 0;
           font-family: Arial, sans-serif;
-          color: #2f241d;
+          color: #0f172a;
           background: #ffffff;
           line-height: 1.22;
           font-size: 9px;
@@ -1087,9 +1092,10 @@ function buildHtml(data) {
           align-items: center;
           justify-content: center;
           background:
-            radial-gradient(circle at top left, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 30%),
-            linear-gradient(180deg, #f4e9df 0%, #ecdfd2 100%);
-          border: 1px solid #dcc5b2;
+            radial-gradient(circle at top left, rgba(34,197,94,0.08) 0%, rgba(255,255,255,0) 28%),
+            radial-gradient(circle at top right, rgba(22,163,74,0.06) 0%, rgba(255,255,255,0) 22%),
+            linear-gradient(180deg, #f8fffb 0%, #f1fbf5 100%);
+          border: 1px solid #dceee2;
           border-radius: 22px;
           padding: 11mm;
           page-break-after: always;
@@ -1097,26 +1103,50 @@ function buildHtml(data) {
 
         .cover-shell {
           width: 100%;
-          background: rgba(255, 251, 247, 0.82);
-          border: 1px solid #e2cfbf;
+          background: #ffffff;
+          border: 1px solid #dceee2;
           border-radius: 18px;
-          padding: 13px;
-          box-shadow: 0 8px 24px rgba(91, 67, 51, 0.08);
+          padding: 14px;
+          box-shadow: 0 10px 26px rgba(15, 23, 42, 0.05);
+        }
+
+        .cover-top-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          padding: 5px 10px;
+          border-radius: 999px;
+          background: #eefaf2;
+          border: 1px solid #dceee2;
+          color: #166534;
+          font-size: 8px;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          margin: 0 auto 10px;
+        }
+
+        .cover-top-dot {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: #22c55e;
+          display: inline-block;
         }
 
         .cover-brand {
           text-align: center;
-          font-size: 40px;
+          font-size: 38px;
           font-weight: 800;
-          letter-spacing: 3px;
-          color: #7b5a43;
+          letter-spacing: 2.5px;
+          color: #0a0f1c;
           margin-bottom: 5px;
         }
 
         .cover-brand-line {
           width: 106px;
           height: 4px;
-          background: #b08968;
+          background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%);
           border-radius: 999px;
           margin: 0 auto 12px;
         }
@@ -1125,7 +1155,7 @@ function buildHtml(data) {
           text-align: center;
           font-size: 19px;
           line-height: 1.1;
-          color: #4d3527;
+          color: #0a0f1c;
           font-weight: 700;
           margin-bottom: 7px;
         }
@@ -1133,7 +1163,7 @@ function buildHtml(data) {
         .cover-description {
           text-align: center;
           font-size: 10.4px;
-          color: #6d5646;
+          color: #5b6472;
           line-height: 1.35;
           margin: 0 auto 10px;
           max-width: 130mm;
@@ -1146,26 +1176,27 @@ function buildHtml(data) {
         }
 
         .cover-profile-item {
-          background: #fbf6f1;
-          border: 1px solid #e1cdbc;
+          background: #ffffff;
+          border: 1px solid #dceee2;
           border-radius: 11px;
           padding: 7px 8px;
           min-height: 46px;
+          box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
         }
 
         .cover-profile-label {
-          font-size: 7.6px;
+          font-size: 7.4px;
           font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 0.42px;
-          color: #8a6a55;
+          color: #15803d;
           margin-bottom: 3px;
           text-align: center;
         }
 
         .cover-profile-value {
           font-size: 9px;
-          color: #2f241d;
+          color: #0f172a;
           font-weight: 600;
           line-height: 1.2;
           text-align: center;
@@ -1173,11 +1204,11 @@ function buildHtml(data) {
 
         .cover-summary {
           margin-top: 9px;
-          background: #f7eee6;
-          border: 1px solid #e7d7ca;
+          background: #f6fff9;
+          border: 1px solid #dceee2;
           border-radius: 11px;
           padding: 7px 9px;
-          color: #5b4333;
+          color: #445164;
           text-align: center;
           font-size: 9px;
           line-height: 1.3;
@@ -1191,11 +1222,11 @@ function buildHtml(data) {
         }
 
         .card {
-          background: #fffaf5;
-          border: 1px solid #e2d1c2;
+          background: #ffffff;
+          border: 1px solid #dceee2;
           border-radius: 12px;
           padding: 8px;
-          box-shadow: 0 2px 6px rgba(123, 90, 67, 0.05);
+          box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
         }
 
         .compact-card {
@@ -1206,7 +1237,7 @@ function buildHtml(data) {
           font-size: 11.5px;
           font-weight: 700;
           margin: 0 0 6px;
-          color: #6e4d39;
+          color: #0a0f1c;
           text-align: center;
         }
 
@@ -1220,12 +1251,13 @@ function buildHtml(data) {
           display: flex;
           gap: 6px;
           align-items: flex-start;
-          background: #f7ede4;
-          border: 1px solid #e7d7ca;
+          background: #f8fffb;
+          border: 1px solid #dceee2;
           border-radius: 9px;
           padding: 5px 6px;
           font-size: 8.3px;
           line-height: 1.18;
+          color: #445164;
         }
 
         .note-dot {
@@ -1233,25 +1265,25 @@ function buildHtml(data) {
           height: 6px;
           min-width: 6px;
           border-radius: 50%;
-          background: #b08968;
+          background: #22c55e;
           margin-top: 2px;
         }
 
         .meal-box {
-          background: linear-gradient(180deg, #fffaf5 0%, #fffdfb 100%);
-          border: 1px solid #deccb9;
+          background: linear-gradient(180deg, #ffffff 0%, #fbfffc 100%);
+          border: 1px solid #dceee2;
           border-radius: 16px;
           padding: 10px;
           margin-bottom: 8px;
           break-inside: avoid;
           page-break-inside: avoid;
-          box-shadow: 0 6px 16px rgba(123, 90, 67, 0.05);
+          box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
         }
 
         .meal-title {
           font-size: 13.8px;
           font-weight: 800;
-          color: #5f4332;
+          color: #0a0f1c;
           margin-bottom: 7px;
           text-align: center;
           letter-spacing: 0.55px;
@@ -1259,9 +1291,9 @@ function buildHtml(data) {
 
         .meal-subtext {
           font-size: 8px;
-          color: #725947;
-          background: #f4e7db;
-          border: 1px solid #e3cfbe;
+          color: #445164;
+          background: #f6fff9;
+          border: 1px solid #dceee2;
           border-radius: 7px;
           padding: 3px 5px;
           margin-bottom: 3px;
@@ -1293,8 +1325,8 @@ function buildHtml(data) {
 
         .option-card {
           position: relative;
-          background: linear-gradient(180deg, #fffdfb 0%, #fffaf6 100%);
-          border: 1px solid #e6d4c4;
+          background: linear-gradient(180deg, #ffffff 0%, #fbfffc 100%);
+          border: 1px solid #dceee2;
           border-radius: 14px;
           padding: 0;
           break-inside: avoid;
@@ -1304,8 +1336,8 @@ function buildHtml(data) {
           text-align: center;
           display: flex;
           box-shadow:
-            0 6px 14px rgba(91, 67, 51, 0.05),
-            inset 0 1px 0 rgba(255,255,255,0.65);
+            0 8px 18px rgba(15, 23, 42, 0.04),
+            inset 0 1px 0 rgba(255,255,255,0.7);
           overflow: hidden;
         }
 
@@ -1317,7 +1349,7 @@ function buildHtml(data) {
           right: 12px;
           height: 2px;
           border-radius: 999px;
-          background: linear-gradient(90deg, #b08968 0%, #d7bda7 100%);
+          background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%);
         }
 
         .option-card-inner {
@@ -1340,7 +1372,7 @@ function buildHtml(data) {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          background: linear-gradient(180deg, #7b5a43 0%, #684936 100%);
+          background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%);
           color: #fff;
           border-radius: 999px;
           padding: 4px 10px;
@@ -1349,7 +1381,7 @@ function buildHtml(data) {
           font-weight: 700;
           line-height: 1;
           letter-spacing: 0.2px;
-          box-shadow: 0 3px 8px rgba(91, 67, 51, 0.12);
+          box-shadow: 0 4px 10px rgba(22, 163, 74, 0.16);
         }
 
         .option-lines {
@@ -1377,9 +1409,9 @@ function buildHtml(data) {
           display: flex;
           width: 100%;
           min-height: 28px;
-          background: linear-gradient(180deg, #f8f1ea 0%, #f4ebe2 100%);
-          border: 1px solid #dfcab8;
-          color: #2f241d;
+          background: linear-gradient(180deg, #f8fffb 0%, #f4fcf7 100%);
+          border: 1px solid #dceee2;
+          color: #0f172a;
           border-radius: 9px;
           padding: 0;
           text-align: center;
@@ -1408,9 +1440,9 @@ function buildHtml(data) {
           align-items: center;
           justify-content: center;
           align-self: center;
-          background: #fff8f2;
-          border: 1px solid #e3cdbc;
-          color: #7b5a43;
+          background: #ffffff;
+          border: 1px solid #dceee2;
+          color: #15803d;
           border-radius: 999px;
           padding: 1px 6px;
           min-height: 15px;
@@ -1427,11 +1459,11 @@ function buildHtml(data) {
         .choice-box-item {
           display: flex;
           min-height: 22px;
-          background: linear-gradient(180deg, #ffffff 0%, #fdf8f3 100%);
-          border: 1px solid #e3cfbe;
+          background: linear-gradient(180deg, #ffffff 0%, #fbfffc 100%);
+          border: 1px solid #dceee2;
           border-radius: 8px;
           padding: 0;
-          color: #4f3728;
+          color: #445164;
           box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
         }
 
@@ -1454,7 +1486,7 @@ function buildHtml(data) {
           text-align: center;
           font-size: 8px;
           font-weight: 800;
-          color: #7b5a43;
+          color: #16a34a;
           margin: 0;
         }
 
@@ -1514,14 +1546,14 @@ function buildHtml(data) {
         }
 
         .internal-card {
-          background: #fff6ef;
-          border: 1px solid #d9bfa7;
+          background: #fbfffc;
+          border: 1px solid #cde7d7;
         }
 
         .internal-subtitle {
           font-size: 10px;
           font-weight: 700;
-          color: #6b4b36;
+          color: #0a0f1c;
           margin: 8px 0 4px;
         }
 
@@ -1534,7 +1566,7 @@ function buildHtml(data) {
 
         .internal-table th,
         .internal-table td {
-          border: 1px solid #dcc8b7;
+          border: 1px solid #dceee2;
           padding: 4px 5px;
           font-size: 7.5px;
           line-height: 1.08;
@@ -1544,8 +1576,8 @@ function buildHtml(data) {
         }
 
         .internal-table th {
-          background: #f2e3d6;
-          color: #5a4030;
+          background: #f3fcf6;
+          color: #0a0f1c;
           font-weight: 700;
         }
 
