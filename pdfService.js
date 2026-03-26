@@ -170,8 +170,8 @@ function calcularCaloriasObjetivo(data) {
   }
 
   const factoresGrasa = {
-    muy_tapado: 0.9,
-    normal: 0.95,
+    muy_tapado: 0.93,
+    normal: 0.97,
     marcado: 1,
   }
 
