@@ -155,9 +155,28 @@ function renderIndicacionesGenerales(items) {
     'Puedes añadir verduras fibrosas según tolerancia, mejor cocinadas.',
   ]
 
-  const list = items?.length ? items : defaultItems
+  const finalItems =
+    Array.isArray(items) && items.length > 0
+      ? items
+      : defaultItems
 
-  return list
+  return `
+    <div class="card compact-card">
+      <div class="section-title">Indicaciones generales</div>
+      <div class="notes-list">
+        ${finalItems
+          .map(
+            (item) => `
+              <div class="note-item">
+                <span class="note-dot"></span>
+                <span>${escapeHtml(item)}</span>
+              </div>
+            `
+          )
+          .join('')}
+      </div>
+    </div>
+  `
 }
 
   const finalItems =
