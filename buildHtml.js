@@ -179,30 +179,6 @@ function renderIndicacionesGenerales(items) {
   `
 }
 
-  const finalItems =
-    Array.isArray(items) && items.length > 0
-      ? [...items, 'Todos los pesos de patata, boniato, arroz y calabaza están expresados en crudo.']
-      : defaultItems
-
-  return `
-    <div class="card compact-card">
-      <div class="section-title">Indicaciones generales</div>
-      <div class="notes-list">
-        ${finalItems
-          .map(
-            (item) => `
-              <div class="note-item">
-                <span class="note-dot"></span>
-                <span>${escapeHtml(item)}</span>
-              </div>
-            `
-          )
-          .join('')}
-      </div>
-    </div>
-  `
-}
-
 function hashString(str) {
   const text = String(str || '')
   let hash = 2166136261
