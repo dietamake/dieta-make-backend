@@ -170,9 +170,9 @@ function calcularCaloriasObjetivo(data) {
   }
 
   const factoresGrasa = {
-    muy_tapado: 0.8,
-    normal: 0.85,
-    marcado: 0.9,
+    muy_tapado: 0.9,
+    normal: 0.95,
+    marcado: 1,
   }
 
   let calorias = bmr * factoresActividad[actividad]
