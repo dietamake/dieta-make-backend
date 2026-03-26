@@ -139,12 +139,26 @@ function renderNotas(title, items) {
 
 function renderIndicacionesGenerales(items) {
   const defaultItems = [
-    'Prioriza la constancia semanal frente a la perfección diaria.',
-    'Mantén horarios de comida lo más regulares posible.',
-    'Ajusta cantidades en función de hambre, saciedad y evolución.',
-    'Hidrátate de forma estable durante todo el día.',
-    'Todos los pesos de patata, boniato, arroz y calabaza están expresados en crudo.',
+    'Elige una opción por comida y un alimento por cada línea.',
+    'Pesa los alimentos en crudo antes de cocinar.',
+    'Añade sal y especias al gusto según digestión.',
+    'Cocina con mantequilla o sebo (baja temperatura) y ghee o aceite de coco (alta). Evita antiadherentes.',
+    'Lava arroz, patata o boniato hasta que el agua salga clara antes de cocinar.',
+    'Prioriza alimentos locales, de calidad y, si es posible, ecológicos. Lava con agua y bicarbonato si dudas.',
+    'En productos animales, prioriza origen natural o alimentación de calidad.',
+    'Bebe agua según necesidad durante el día. Evita beber en comidas; hazlo entre ellas.',
+    'Mejor agua filtrada o de buena calidad. Usa botellas de cristal o acero.',
+    'Camina 5–10 min después de comer.',
+    'Come con luz natural siempre que puedas.',
+    'Evita picar entre comidas.',
+    'Evita beber tras la última comida (solo pequeños sorbos si es necesario).',
+    'Puedes añadir verduras fibrosas según tolerancia, mejor cocinadas.',
   ]
+
+  const list = items?.length ? items : defaultItems
+
+  return list
+}
 
   const finalItems =
     Array.isArray(items) && items.length > 0
