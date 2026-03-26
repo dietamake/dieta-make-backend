@@ -524,31 +524,32 @@ function traducirAjustesPersonalizados(data) {
   )
 
   return {
-    ultimaComidaTexto: ultimaComida.map((code) => {
-      const map = {
-        mas_dulce_noche:
-          'En la última comida te conviene meter un poco más de dulce fácil de digerir. Ejemplos: más miel, fruta o dátiles si esa opción los permite.',
-        mas_hidrato_noche:
-          'En la última comida te conviene meter un poco más de hidrato de digestión lenta. Ejemplos: más patata, boniato, arroz, calabaza o avena según la opción.',
-        mas_grasa_noche:
-          'En la última comida te conviene añadir un poco más de grasa. Ejemplos: aceite de coco, queso, aguacate o nueces según la opción.',
-      }
-      return map[code] || code
-    }),
-    duranteDiaTexto: duranteDia.map((code) => {
-      const map = {
-        menos_proteina:
-          'Durante el día intenta no cargar demasiado las comidas de proteína.',
-        mas_calcio:
-          'Durante el día prioriza alimentos con calcio. Ejemplos: leche, yogur, queso fresco batido o queso.',
-        mas_fibra:
-          'Durante el día mete algo más de fibra. Ejemplos: más verdura, más fruta entera o un poco más de avena si te sienta bien.',
-        cafe_con_azucar:
-          'Puedes tomar café con un poco de azúcar junto a las comidas.',
-      }
-      return map[code] || code
-    }),
-  }
+  ultimaComidaTexto: ultimaComida.map((code) => {
+    const map = {
+      mas_dulce_noche:
+        'En la última comida te conviene meter un poco más de dulce fácil de digerir. Ejemplos: más miel, fruta o dátiles si esa opción los permite.',
+      mas_hidrato_noche:
+        'En la última comida te conviene meter un poco más de hidrato de digestión lenta. Ejemplos: más patata, boniato, arroz, calabaza o avena según la opción.',
+      mas_grasa_noche:
+        'En la última comida te conviene añadir un poco más de grasa. Ejemplos: aceite de coco, queso, aguacate o frutos secos (excepto nueces de macadamia).',
+    }
+    return map[code] || code
+  }),
+
+  duranteDiaTexto: duranteDia.map((code) => {
+    const map = {
+      menos_proteina:
+        'Durante el día intenta no cargar demasiado las comidas de proteína.',
+      mas_calcio:
+        'Durante el día prioriza alimentos con calcio. Ejemplos: leche, yogur, queso fresco batido o queso.',
+      mas_fibra:
+        'Durante el día mete algo más de fibra usando solo verdura de fácil digestión.',
+      cafe_con_azucar:
+        '', // eliminado porque está prohibido
+    }
+    return map[code] || code
+  }).filter(Boolean), // elimina textos vacíos
+}
 }
 
 /* ========= GENERADOR DE PLAN ========= */
