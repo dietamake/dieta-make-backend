@@ -155,10 +155,7 @@ function renderIndicacionesGenerales(items) {
     'Puedes añadir verduras fibrosas según tolerancia, mejor cocinadas.',
   ]
 
-  const finalItems =
-    Array.isArray(items) && items.length > 0
-      ? items
-      : defaultItems
+  const finalItems = Array.isArray(items) && items.length > 0 ? items : defaultItems
 
   return `
     <div class="card compact-card">
@@ -256,185 +253,13 @@ function formatPrimeraComida(value) {
   return '-'
 }
 
-function formatActividad(value) {
-  const map = {
-    sedentario: 'Sedentario',
-    ligero: 'Ligero',
-    moderado: 'Moderado',
-    alto: 'Alto',
-  }
-  return map[value] || value || '-'
-}
-
-function formatGrasa(value) {
-  const map = {
-    muy_tapado: 'Muy tapado',
-    normal: 'Normal',
-    marcado: 'Marcado',
-  }
-  return map[value] || value || '-'
-}
-
-function formatSueno(value) {
-  if (value === 5) return 'Menos de 6 h'
-  if (value === 7) return '6–8 h'
-  if (value === 9) return 'Más de 8 h'
-  return value || '-'
-}
-
-function renderControlInterno(data) {
-  const reparto = Array.isArray(data.reparto) ? data.reparto : []
-  const ajustes = data.ajustes || {}
-
-  const factoresActividad = {
-    sedentario: 1.2,
-    ligero: 1.4,
-    moderado: 1.55,
-    alto: 1.75,
-  }
-
-  const factoresGrasa = {
-    muy_tapado: 0.93,
-    normal: 0.97,
-    marcado: 1,
-  }
-
-  let bmr = '-'
-  if (data.sexo === 'hombre') {
-    bmr = Math.round(
-      10 * Number(data.peso || 0) +
-        6.25 * Number(data.altura || 0) -
-        5 * Number(data.edad || 0) +
-        5
-    )
-  } else if (data.sexo === 'mujer') {
-    bmr = Math.round(
-      10 * Number(data.peso || 0) +
-        6.25 * Number(data.altura || 0) -
-        5 * Number(data.edad || 0) -
-        161
-    )
-  }
-
-  const factorActividad = factoresActividad[data.actividad] || '-'
-  const factorGrasa = factoresGrasa[data.grasa] || '-'
-  const ajusteSueno =
-    Number(data.sueno) < 6 ? '-5%' : Number(data.sueno) > 8 ? '+2%' : '0%'
-  const deficitFinal = '-10%'
-
-  const ajustesRows = [
-    ['comida1', JSON.stringify(ajustes.comida1 || {})],
-    ['comida2', JSON.stringify(ajustes.comida2 || {})],
-    ['comida2Normal', JSON.stringify(ajustes.comida2Normal || {})],
-    ['comida2Avena', JSON.stringify(ajustes.comida2Avena || {})],
-    ['comida3', JSON.stringify(ajustes.comida3 || {})],
-    ['comida3Normal', JSON.stringify(ajustes.comida3Normal || {})],
-    ['comida3Avena', JSON.stringify(ajustes.comida3Avena || {})],
-    ['comida4', JSON.stringify(ajustes.comida4 || {})],
-  ].filter(([, value]) => value !== '{}')
-
-  return `
-    <div class="card compact-card internal-card">
-      <div class="section-title">Control interno · cálculo y ajustes</div>
-
-      <div class="internal-subtitle">1. Cálculo de calorías</div>
-      <table class="internal-table">
-        <tbody>
-          <tr><th>Sexo</th><td>${escapeHtml(data.sexo || '-')}</td></tr>
-          <tr><th>Edad</th><td>${escapeHtml(data.edad || '-')}</td></tr>
-          <tr><th>Altura</th><td>${escapeHtml(data.altura || '-')}</td></tr>
-          <tr><th>Peso</th><td>${escapeHtml(data.peso || '-')}</td></tr>
-          <tr><th>BMR estimado</th><td>${escapeHtml(bmr)}</td></tr>
-          <tr><th>Actividad</th><td>${escapeHtml(formatActividad(data.actividad))} · factor ${escapeHtml(factorActividad)}</td></tr>
-          <tr><th>Grasa abdominal</th><td>${escapeHtml(formatGrasa(data.grasa))} · factor ${escapeHtml(factorGrasa)}</td></tr>
-          <tr><th>Sueño</th><td>${escapeHtml(formatSueno(data.sueno))} · ajuste ${escapeHtml(ajusteSueno)}</td></tr>
-          <tr><th>Ajuste final</th><td>${escapeHtml(deficitFinal)}</td></tr>
-          <tr><th>Calorías objetivo</th><td><strong>${escapeHtml(data.caloriasObjetivo || '-')} kcal</strong></td></tr>
-          <tr><th>Seed aleatoria</th><td>${escapeHtml(data.randomSeed || '-')}</td></tr>
-          <tr><th>Número de opciones plan</th><td>${escapeHtml(data.numeroOpcionesPlan || '-')}</td></tr>
-        </tbody>
-      </table>
-
-      <div class="internal-subtitle">2. Reparto por comida</div>
-      <table class="internal-table">
-        <thead>
-          <tr>
-            <th>Comida</th>
-            <th>%</th>
-            <th>Base kcal</th>
-            <th>Objetivo kcal</th>
-            <th>Delta kcal</th>
-            <th>Delta carbs aprox.</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${
-            reparto.length
-              ? reparto
-                  .map(
-                    (item) => `
-                      <tr>
-                        <td>${escapeHtml(item.nombre || item.key || '-')}</td>
-                        <td>${escapeHtml(Math.round((item.pct || 0) * 100))}%</td>
-                        <td>${escapeHtml(item.baseKcal ?? '-')}</td>
-                        <td>${escapeHtml(item.kcalObjetivo ?? '-')}</td>
-                        <td>${escapeHtml(item.deltaKcal ?? '-')}</td>
-                        <td>${escapeHtml(item.deltaCarbs ?? '-')} g</td>
-                      </tr>
-                    `
-                  )
-                  .join('')
-              : `
-                <tr>
-                  <td colspan="6">Sin datos de reparto</td>
-                </tr>
-              `
-          }
-        </tbody>
-      </table>
-
-      <div class="internal-subtitle">3. Ajustes aplicados para cuadrar la dieta</div>
-      <table class="internal-table">
-        <thead>
-          <tr>
-            <th>Bloque</th>
-            <th>Ajuste</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${
-            ajustesRows.length
-              ? ajustesRows
-                  .map(
-                    ([key, value]) => `
-                      <tr>
-                        <td>${escapeHtml(key)}</td>
-                        <td class="mono-cell">${escapeHtml(value)}</td>
-                      </tr>
-                    `
-                  )
-                  .join('')
-              : `
-                <tr>
-                  <td colspan="2">Sin ajustes calculados</td>
-                </tr>
-              `
-          }
-        </tbody>
-      </table>
-    </div>
-  `
-}
-
 function renderCover(data) {
   const objetivo = formatObjetivo(data)
   const nombre = data.nombre || 'Cliente'
   const plan = data.plan || 'Plan personalizado'
   const fecha = formatFecha(data.fechaGeneracion)
 
-  const profileItems = [
-    ['Cliente', nombre],
-    ['Objetivo', objetivo || '-'],
+  const detailItems = [
     ['Plan', plan],
     ['Fecha', fecha],
     ['Email', data.email || '-'],
@@ -450,27 +275,40 @@ function renderCover(data) {
   return `
     <section class="cover">
       <div class="cover-shell">
-        <div class="cover-top-pill">
-          <span class="cover-top-dot"></span>
-          <span>DIETA PERSONALIZADA</span>
+        <div class="cover-header">
+          <div class="cover-top-pill">
+            <span class="cover-top-dot"></span>
+            <span>DIETA PERSONALIZADA</span>
+          </div>
+
+          <div class="cover-brand">DIETA MAKE</div>
+          <div class="cover-brand-line"></div>
         </div>
 
-        <div class="cover-brand">DIETA MAKE</div>
-        <div class="cover-brand-line"></div>
-
-        <div class="cover-plan-name">${escapeHtml(data.tituloPlan || 'Plan nutricional personalizado')}</div>
-
-        <div class="cover-description">
-          Diseñado según tu perfil, tu objetivo y la estructura de comidas seleccionada.
+        <div class="cover-hero">
+          <div class="cover-plan-name">${escapeHtml(data.tituloPlan || 'Plan nutricional personalizado')}</div>
+          <div class="cover-description">
+            Diseñado según tu perfil, tu objetivo y la estructura de comidas seleccionada.
+          </div>
         </div>
 
-        <div class="cover-profile-grid">
-          ${profileItems
+        <div class="cover-focus-card">
+          <div class="cover-focus-label">Cliente</div>
+          <div class="cover-focus-name">${escapeHtml(nombre)}</div>
+
+          <div class="cover-focus-divider"></div>
+
+          <div class="cover-focus-label">Objetivo</div>
+          <div class="cover-focus-goal">${escapeHtml(objetivo || '-')}</div>
+        </div>
+
+        <div class="cover-details-grid">
+          ${detailItems
             .map(
               ([label, value]) => `
-                <div class="cover-profile-item">
-                  <div class="cover-profile-label">${escapeHtml(label)}</div>
-                  <div class="cover-profile-value">${escapeHtml(value)}</div>
+                <div class="cover-detail-card">
+                  <div class="cover-detail-label">${escapeHtml(label)}</div>
+                  <div class="cover-detail-value">${escapeHtml(value)}</div>
                 </div>
               `
             )
@@ -479,7 +317,12 @@ function renderCover(data) {
 
         ${
           data.resumenPlan
-            ? `<div class="cover-summary">${escapeHtml(data.resumenPlan)}</div>`
+            ? `
+              <div class="cover-summary-box">
+                <div class="cover-summary-title">Resumen del plan</div>
+                <div class="cover-summary">${escapeHtml(data.resumenPlan)}</div>
+              </div>
+            `
             : ''
         }
       </div>
@@ -1129,11 +972,16 @@ function buildHtml(data) {
 
         .cover-shell {
           width: 100%;
-          background: rgba(255,255,255,0.94);
+          background: rgba(255,255,255,0.95);
           border: 1px solid var(--line);
           border-radius: 22px;
-          padding: 16px;
+          padding: 18px;
           box-shadow: var(--shadow-lg);
+        }
+
+        .cover-header {
+          text-align: center;
+          margin-bottom: 16px;
         }
 
         .cover-top-pill {
@@ -1174,70 +1022,129 @@ function buildHtml(data) {
           height: 4px;
           background: linear-gradient(90deg, #28b463 0%, #177845 100%);
           border-radius: 999px;
-          margin: 0 auto 14px;
+          margin: 0 auto;
+        }
+
+        .cover-hero {
+          text-align: center;
+          margin-bottom: 16px;
         }
 
         .cover-plan-name {
           text-align: center;
-          font-size: 19px;
-          line-height: 1.1;
+          font-size: 21px;
+          line-height: 1.08;
           color: var(--title);
-          font-weight: 700;
-          margin-bottom: 7px;
+          font-weight: 800;
+          margin-bottom: 8px;
         }
 
         .cover-description {
           text-align: center;
-          font-size: 10.3px;
+          font-size: 10.4px;
           color: var(--text-soft);
-          line-height: 1.38;
-          margin: 0 auto 12px;
+          line-height: 1.4;
+          margin: 0 auto;
           max-width: 132mm;
         }
 
-        .cover-profile-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr 1fr;
-          gap: 8px;
+        .cover-focus-card {
+          background: linear-gradient(180deg, #ffffff 0%, #f6fbf8 100%);
+          border: 1px solid var(--line);
+          border-radius: 18px;
+          padding: 16px 14px;
+          margin: 0 auto 14px;
+          text-align: center;
+          box-shadow: var(--shadow-md);
         }
 
-        .cover-profile-item {
+        .cover-focus-label {
+          font-size: 7.5px;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.55px;
+          color: var(--green-dark);
+          margin-bottom: 5px;
+        }
+
+        .cover-focus-name {
+          font-size: 20px;
+          font-weight: 800;
+          line-height: 1.1;
+          color: var(--title);
+        }
+
+        .cover-focus-divider {
+          width: 56px;
+          height: 3px;
+          border-radius: 999px;
+          background: linear-gradient(90deg, #2ab866 0%, #1b7c48 100%);
+          margin: 12px auto 10px;
+        }
+
+        .cover-focus-goal {
+          font-size: 13px;
+          line-height: 1.25;
+          font-weight: 700;
+          color: var(--text);
+          max-width: 120mm;
+          margin: 0 auto;
+        }
+
+        .cover-details-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 8px;
+          margin-bottom: 12px;
+        }
+
+        .cover-detail-card {
           background: linear-gradient(180deg, #ffffff 0%, #fbfdfb 100%);
           border: 1px solid var(--line);
           border-radius: 12px;
-          padding: 8px 8px;
+          padding: 8px 9px;
           min-height: 48px;
           box-shadow: var(--shadow-sm);
         }
 
-        .cover-profile-label {
-          font-size: 7.2px;
+        .cover-detail-label {
+          font-size: 7.1px;
           font-weight: 700;
           text-transform: uppercase;
-          letter-spacing: 0.48px;
+          letter-spacing: 0.45px;
           color: var(--green-dark);
           margin-bottom: 4px;
-          text-align: center;
         }
 
-        .cover-profile-value {
-          font-size: 9px;
+        .cover-detail-value {
+          font-size: 9.3px;
           color: var(--text);
           font-weight: 700;
-          line-height: 1.18;
+          line-height: 1.2;
+        }
+
+        .cover-summary-box {
+          background: linear-gradient(180deg, #f7fbf8 0%, #f1f8f3 100%);
+          border: 1px solid var(--line);
+          border-radius: 14px;
+          padding: 10px 12px;
+        }
+
+        .cover-summary-title {
+          font-size: 8px;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          color: var(--green-dark);
           text-align: center;
+          margin-bottom: 6px;
         }
 
         .cover-summary {
-          margin-top: 10px;
-          background: linear-gradient(180deg, #f7fbf8 0%, #f1f8f3 100%);
-          border: 1px solid var(--line);
-          border-radius: 12px;
-          padding: 8px 10px;
           color: var(--text-soft);
           text-align: center;
           font-size: 9px;
-          line-height: 1.32;
+          line-height: 1.35;
         }
 
         .section-stack {
@@ -1297,8 +1204,7 @@ function buildHtml(data) {
         }
 
         .meal-box {
-          background:
-            linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(249,252,250,1) 100%);
+          background: linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(249,252,250,1) 100%);
           border: 1px solid var(--line);
           border-radius: 18px;
           padding: 10px;
@@ -1577,47 +1483,6 @@ function buildHtml(data) {
         .footer-space {
           height: 1px;
         }
-
-        .internal-card {
-          background: linear-gradient(180deg, #fbfdfb 0%, #f5f9f6 100%);
-          border: 1px solid var(--line-strong);
-        }
-
-        .internal-subtitle {
-          font-size: 10px;
-          font-weight: 800;
-          color: var(--title);
-          margin: 8px 0 4px;
-        }
-
-        .internal-table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-bottom: 6px;
-          table-layout: fixed;
-        }
-
-        .internal-table th,
-        .internal-table td {
-          border: 1px solid var(--line);
-          padding: 4px 5px;
-          font-size: 7.45px;
-          line-height: 1.08;
-          vertical-align: top;
-          text-align: left;
-          word-break: break-word;
-        }
-
-        .internal-table th {
-          background: #f1f7f3;
-          color: var(--title);
-          font-weight: 700;
-        }
-
-        .mono-cell {
-          font-family: "Courier New", monospace;
-          font-size: 6.9px;
-        }
       </style>
     </head>
     <body>
@@ -1628,7 +1493,6 @@ function buildHtml(data) {
           ${renderIndicacionesGenerales(indicacionesGenerales)}
           ${renderNotas('Ajustes recomendados durante el día', ajustesPersonalizados.duranteDiaTexto)}
           ${renderNotas('Ajustes recomendados para la última comida', ajustesPersonalizados.ultimaComidaTexto)}
-          ${renderControlInterno(data)}
         </div>
 
         ${mealsHtml}
