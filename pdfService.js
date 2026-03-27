@@ -27,7 +27,6 @@ const CARB_DB = {
   miel_cruda: { kcalPerGram: 3.04 },
   pan_masa_madre: { kcalPerGram: 2.4 },
 
-  // PESOS EN CRUDO
   patata_cruda: { kcalPerGram: 0.77 },
   boniato_crudo: { kcalPerGram: 0.86 },
   arroz_blanco_crudo: { kcalPerGram: 3.6 },
@@ -203,8 +202,6 @@ function repartirCaloriasPorComida(caloriasObjetivo, mealsConfig) {
     }
   })
 }
-
-/* ========= AJUSTES POR TIPO DE COMIDA ========= */
 
 function ajustarDesayunoAvena(deltaKcal, baseAvena = 50, minAvena = 15) {
   let deltaRestante = deltaKcal
@@ -414,8 +411,6 @@ function ajustarComidaFrutaOMiel(deltaKcal, baseMiel = 35) {
   }
 }
 
-/* ========= AJUSTES PERSONALIZADOS ========= */
-
 function mergeUnique(arr1 = [], arr2 = []) {
   return [...new Set([...arr1, ...arr2])]
 }
@@ -552,8 +547,6 @@ function traducirAjustesPersonalizados(data) {
   }
 }
 
-/* ========= GENERADOR DE PLAN ========= */
-
 function generarPlanComidas(numeroComidas, caloriasObjetivo) {
   const config = PLAN_CONFIG[numeroComidas]
   const reparto = repartirCaloriasPorComida(caloriasObjetivo, config.meals)
@@ -657,14 +650,16 @@ async function generatePdfForLead(formId) {
   if (error) throw error
   if (!data) throw new Error('No se encontró ninguna fila con ese id')
 
-  await supabase
+  const { error: updateGeneratingError } = await supabase
     .from('leads_dietas')
     .update({ estado_pdf: 'generating' })
     .eq('id', formId)
 
+  if (updateGeneratingError) throw updateGeneratingError
+
   try {
     const normalizedData = normalizeLeadData(data)
-    const caloriasObjetivo = calcularCaloriasObjetivo(normalizedData)
+    const caloriasObjetivo = calcularCalorias(normalizedData)
 
     const dietPlan = getDietPlan({
       ...normalizedData,
@@ -689,7 +684,7 @@ async function generatePdfForLead(formId) {
 
     if (uploadError) throw uploadError
 
-    await supabase
+    const { error: updateDoneError } = await supabase
       .from('leads_dietas')
       .update({
         estado_pdf: 'done',
@@ -698,12 +693,18 @@ async function generatePdfForLead(formId) {
       })
       .eq('id', formId)
 
+    if (updateDoneError) throw updateDoneError
+
     return filePath
   } catch (err) {
-    await supabase
+    const { error: updateErrorState } = await supabase
       .from('leads_dietas')
       .update({ estado_pdf: 'error' })
       .eq('id', formId)
+
+    if (updateErrorState) {
+      console.error('ERROR ACTUALIZANDO estado_pdf=error:', updateErrorState)
+    }
 
     console.error('ERROR GENERANDO PDF:', err)
     throw err
