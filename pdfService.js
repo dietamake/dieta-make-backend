@@ -78,6 +78,7 @@ function normalizeActividad(value) {
   if (v.includes('sedent')) return 'sedentario'
   if (v.includes('1-3') || v.includes('1–3') || v.includes('liger')) return 'ligero'
   if (v.includes('3-5') || v.includes('3–5') || v.includes('moderad') || v.includes('media')) return 'moderado'
+
   if (
     v.includes('6-7') ||
     v.includes('6–7') ||
@@ -125,37 +126,6 @@ function normalizeDespertar(value) {
   return ''
 }
 
-function normalizeObjetivo(value) {
-  const v = String(value || '').trim().toLowerCase()
-
-  if (
-    v.includes('perd') ||
-    v.includes('defin') ||
-    v.includes('bajar') ||
-    v.includes('grasa')
-  ) {
-    return 'perder'
-  }
-
-  if (
-    v.includes('mant') ||
-    v.includes('recompos') ||
-    v.includes('mantener')
-  ) {
-    return 'mantener'
-  }
-
-  if (
-    v.includes('gan') ||
-    v.includes('volumen') ||
-    v.includes('subir')
-  ) {
-    return 'ganar'
-  }
-
-  return 'perder'
-}
-
 function getNumeroOpcionesPlan(plan) {
   const v = String(plan || '').trim().toLowerCase()
   if (v === 'avanzado_3_opciones') return 3
@@ -181,19 +151,9 @@ function createSeedFromLead(data) {
 }
 
 function calcularCaloriasObjetivo(data) {
-  const sexo = normalizeSexo(data.sexo)
-  const edad = toNumber(data.edad, 0)
-  const peso = toNumber(data.peso, 0)
-  const altura = toNumber(data.altura, 0)
-  const actividad = normalizeActividad(data.actividad)
-  const objetivo = normalizeObjetivo(data.objetivo)
-
-  if (!sexo || !edad || !peso || !altura) {
-    throw new Error('Faltan datos válidos para calcular las calorías objetivo')
-  }
+  const { sexo, edad, peso, altura, actividad, objetivo = 'perder' } = data
 
   let bmr = 10 * peso + 6.25 * altura - 5 * edad
-
   if (sexo === 'hombre') bmr += 5
   if (sexo === 'mujer') bmr -= 161
 
@@ -204,8 +164,7 @@ function calcularCaloriasObjetivo(data) {
     alto: 1.725,
   }
 
-  const factorActividad = factoresActividad[actividad] || 1.2
-  const mantenimiento = bmr * factorActividad
+  const mantenimiento = bmr * (factoresActividad[actividad] || 1.2)
 
   let calorias = mantenimiento
 
@@ -218,9 +177,13 @@ function calcularCaloriasObjetivo(data) {
       if (mantenimiento < 2000) calorias = mantenimiento * 0.9
       else calorias = mantenimiento * 0.88
     }
-  } else if (objetivo === 'mantener') {
+  }
+
+  if (objetivo === 'mantener') {
     calorias = mantenimiento
-  } else if (objetivo === 'ganar') {
+  }
+
+  if (objetivo === 'ganar') {
     calorias = mantenimiento * 1.08
   }
 
@@ -667,7 +630,7 @@ function getDietPlan(data) {
 function normalizeLeadData(data) {
   return {
     ...data,
-    objetivo: normalizeObjetivo(formatObjetivo(data.objetivo)),
+    objetivo: formatObjetivo(data.objetivo),
     comidasDia: toNumber(data.comidasDia || data.comidas, 3),
     comidas: toNumber(data.comidas, 3),
     edad: toNumber(data.edad, 0),
@@ -751,66 +714,6 @@ async function generatePdfForLead(formId) {
   }
 }
 
-function getEjemplosMujeres() {
-  const ejemplos = [
-    {
-      nombre: 'Mujer 1 - Déficit suave',
-      sexo: 'mujer',
-      edad: 24,
-      peso: 58,
-      altura: 165,
-      actividad: 'ligero',
-      objetivo: 'perder',
-    },
-    {
-      nombre: 'Mujer 2 - Mantenimiento',
-      sexo: 'mujer',
-      edad: 31,
-      peso: 62,
-      altura: 168,
-      actividad: 'moderado',
-      objetivo: 'mantener',
-    },
-    {
-      nombre: 'Mujer 3 - Ganancia',
-      sexo: 'mujer',
-      edad: 27,
-      peso: 54,
-      altura: 160,
-      actividad: 'alto',
-      objetivo: 'ganar',
-    },
-    {
-      nombre: 'Mujer 4 - Muy activa, pérdida',
-      sexo: 'mujer',
-      edad: 29,
-      peso: 67,
-      altura: 170,
-      actividad: 'alto',
-      objetivo: 'perder',
-    },
-    {
-      nombre: 'Mujer 5 - Sedentaria, pérdida',
-      sexo: 'mujer',
-      edad: 38,
-      peso: 72,
-      altura: 163,
-      actividad: 'sedentario',
-      objetivo: 'perder',
-    },
-  ]
-
-  return ejemplos.map((ejemplo) => ({
-    ...ejemplo,
-    caloriasObjetivo: calcularCaloriasObjetivo(ejemplo),
-  }))
-}
-
 module.exports = {
   generatePdfForLead,
-  calcularCaloriasObjetivo,
-  normalizeLeadData,
-  normalizeObjetivo,
-  getDietPlan,
-  getEjemplosMujeres,
 }
