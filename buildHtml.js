@@ -119,8 +119,8 @@ function optionCard(title, lines) {
 function renderNotas(title, items) {
   if (!items || items.length === 0) return ''
   return `
-    <div class="card compact-card info-card">
-      <div class="section-title left-title">${escapeHtml(title)}</div>
+    <div class="card compact-card">
+      <div class="section-title">${escapeHtml(title)}</div>
       <div class="notes-list">
         ${items
           .map(
@@ -144,11 +144,14 @@ function renderIndicacionesGenerales(items) {
     'Añade sal y especias al gusto según digestión.',
     'Cocina con mantequilla o sebo (baja temperatura) y ghee o aceite de coco (alta). Evita antiadherentes.',
     'Lava arroz, patata o boniato hasta que el agua salga clara antes de cocinar.',
-    'Prioriza alimentos locales, de calidad y, si es posible, ecológicos.',
+    'Prioriza alimentos locales, de calidad y, si es posible, ecológicos. Lava con agua y bicarbonato si dudas.',
     'En productos animales, prioriza origen natural o alimentación de calidad.',
     'Bebe agua según necesidad durante el día. Evita beber en comidas; hazlo entre ellas.',
+    'Mejor agua filtrada o de buena calidad. Usa botellas de cristal o acero.',
     'Camina 5–10 min después de comer.',
+    'Come con luz natural siempre que puedas.',
     'Evita picar entre comidas.',
+    'Evita beber tras la última comida (solo pequeños sorbos si es necesario).',
     'Puedes añadir verduras fibrosas según tolerancia, mejor cocinadas.',
   ]
 
@@ -158,8 +161,8 @@ function renderIndicacionesGenerales(items) {
       : defaultItems
 
   return `
-    <div class="card compact-card info-card">
-      <div class="section-title left-title">Indicaciones generales</div>
+    <div class="card compact-card">
+      <div class="section-title">Indicaciones generales</div>
       <div class="notes-list">
         ${finalItems
           .map(
@@ -332,7 +335,7 @@ function renderControlInterno(data) {
 
   return `
     <div class="card compact-card internal-card">
-      <div class="section-title left-title">Control interno · cálculo y ajustes</div>
+      <div class="section-title">Control interno · cálculo y ajustes</div>
 
       <div class="internal-subtitle">1. Cálculo de calorías</div>
       <table class="internal-table">
@@ -434,35 +437,52 @@ function renderCover(data) {
     ['Objetivo', objetivo || '-'],
     ['Plan', plan],
     ['Fecha', fecha],
+    ['Email', data.email || '-'],
+    ['Sexo', data.sexo || '-'],
+    ['Edad', data.edad ? `${data.edad} años` : '-'],
+    ['Altura', data.altura ? `${data.altura} cm` : '-'],
+    ['Peso', data.peso ? `${data.peso} kg` : '-'],
+    ['Despertar', formatDespertar(data.despertar)],
+    ['Primera comida', formatPrimeraComida(data.primera_comida)],
+    ['Comidas/día', data.comidasDia || data.comidas || '-'],
   ]
 
   return `
     <section class="cover">
-      <div class="cover-top-band"></div>
+      <div class="cover-shell">
+        <div class="cover-top-pill">
+          <span class="cover-top-dot"></span>
+          <span>DIETA PERSONALIZADA</span>
+        </div>
 
-      <div class="cover-hero">
-        <div class="cover-title">${escapeHtml(data.tituloPlan || 'Plan nutricional personalizado')}</div>
-        <div class="cover-subtitle">Diseñado según tu perfil, objetivo y estructura de comidas</div>
+        <div class="cover-brand">DIETA MAKE</div>
+        <div class="cover-brand-line"></div>
+
+        <div class="cover-plan-name">${escapeHtml(data.tituloPlan || 'Plan nutricional personalizado')}</div>
+
+        <div class="cover-description">
+          Diseñado según tu perfil, tu objetivo y la estructura de comidas seleccionada.
+        </div>
+
+        <div class="cover-profile-grid">
+          ${profileItems
+            .map(
+              ([label, value]) => `
+                <div class="cover-profile-item">
+                  <div class="cover-profile-label">${escapeHtml(label)}</div>
+                  <div class="cover-profile-value">${escapeHtml(value)}</div>
+                </div>
+              `
+            )
+            .join('')}
+        </div>
+
+        ${
+          data.resumenPlan
+            ? `<div class="cover-summary">${escapeHtml(data.resumenPlan)}</div>`
+            : ''
+        }
       </div>
-
-      <div class="cover-profile-grid">
-        ${profileItems
-          .map(
-            ([label, value]) => `
-              <div class="cover-profile-item">
-                <div class="cover-profile-label">${escapeHtml(label)}</div>
-                <div class="cover-profile-value">${escapeHtml(value)}</div>
-              </div>
-            `
-          )
-          .join('')}
-      </div>
-
-      ${
-        data.resumenPlan
-          ? `<div class="cover-summary">${escapeHtml(data.resumenPlan)}</div>`
-          : ''
-      }
     </section>
   `
 }
@@ -713,34 +733,19 @@ function render3Meals(data, numeroOpcionesPlan) {
 
   return `
     <div class="meal-box">
-      <div class="meal-head">
-        <div class="meal-number">1</div>
-        <div class="meal-head-text">
-          <div class="meal-title">COMIDA 1</div>
-        </div>
-      </div>
+      <div class="meal-title">COMIDA 1</div>
       ${renderRandomOptionCards(comida1Options, numeroOpcionesPlan, seed, '3m_comida1')}
     </div>
 
     <div class="meal-box">
-      <div class="meal-head">
-        <div class="meal-number">2</div>
-        <div class="meal-head-text">
-          <div class="meal-title">COMIDA 2</div>
-        </div>
-      </div>
+      <div class="meal-title">COMIDA 2</div>
       ${renderRandomOptionCards(comida2Options, numeroOpcionesPlan, seed, '3m_comida2')}
     </div>
 
     <div class="meal-box">
-      <div class="meal-head">
-        <div class="meal-number">3</div>
-        <div class="meal-head-text">
-          <div class="meal-title">COMIDA 3</div>
-          <div class="meal-subtext">5 min antes: Vinagre de sidra de manzana en pastilla (500 mg)</div>
-          <div class="meal-subtext">Al acabar: Bisglicinato de magnesio (2 g)</div>
-        </div>
-      </div>
+      <div class="meal-title">COMIDA 3</div>
+      <div class="meal-subtext">5 min antes de empezar a comer: Vinagre de sidra de manzana en pastilla (500 mg)</div>
+      <div class="meal-subtext">Al acabar de comer: Bisglicinato de magnesio (2 g)</div>
       ${renderRandomOptionCards(comida3Options, numeroOpcionesPlan, seed, '3m_comida3')}
     </div>
   `
@@ -1007,48 +1012,28 @@ function render4Meals(data, numeroOpcionesPlan) {
 
   return `
     <div class="meal-box">
-      <div class="meal-head">
-        <div class="meal-number">1</div>
-        <div class="meal-head-text">
-          <div class="meal-title">COMIDA 1</div>
-          <div class="meal-subtext">5–10 min antes: 10 g Jengibre crudo pelado</div>
-          <div class="meal-subtext">Al acabar: 1 g Bisglicinato de magnesio</div>
-        </div>
-      </div>
+      <div class="meal-title">COMIDA 1</div>
+      <div class="meal-subtext">5–10 min antes de empezar a comer, con todas las opciones: 10 g Jengibre crudo pelado (masticar hasta poder tragar sin agua)</div>
+      <div class="meal-subtext">Al acabar de comer, con todas las opciones: 1 g Bisglicinato de magnesio</div>
       ${renderRandomOptionCards(comida1Options, numeroOpcionesPlan, seed, '4m_comida1')}
     </div>
 
     <div class="meal-box">
-      <div class="meal-head">
-        <div class="meal-number">2</div>
-        <div class="meal-head-text">
-          <div class="meal-title">COMIDA 2</div>
-          <div class="meal-subtext">5–10 min antes: 500 mg Vinagre de sidra de manzana en pastilla</div>
-          <div class="meal-subtext">Al acabar: 1 g Bisglicinato de magnesio</div>
-        </div>
-      </div>
+      <div class="meal-title">COMIDA 2</div>
+      <div class="meal-subtext">5–10 min antes de empezar a comer, con todas las opciones: 500 mg Vinagre de sidra de manzana en pastilla</div>
+      <div class="meal-subtext">Al acabar de comer, con todas las opciones: 1 g Bisglicinato de magnesio</div>
       ${renderRandomOptionCards(comida2Options, numeroOpcionesPlan, seed, '4m_comida2')}
     </div>
 
     <div class="meal-box">
-      <div class="meal-head">
-        <div class="meal-number">3</div>
-        <div class="meal-head-text">
-          <div class="meal-title">COMIDA 3</div>
-          <div class="meal-subtext">Al acabar: 1 g Bisglicinato de magnesio</div>
-        </div>
-      </div>
+      <div class="meal-title">COMIDA 3</div>
+      <div class="meal-subtext">Al acabar de comer, con todas las opciones: 1 g Bisglicinato de magnesio</div>
       ${renderRandomOptionCards(comida3Options, numeroOpcionesPlan, seed, '4m_comida3')}
     </div>
 
     <div class="meal-box">
-      <div class="meal-head">
-        <div class="meal-number">4</div>
-        <div class="meal-head-text">
-          <div class="meal-title">COMIDA 4</div>
-          <div class="meal-subtext">Al acabar: 2 g Bisglicinato de magnesio</div>
-        </div>
-      </div>
+      <div class="meal-title">COMIDA 4</div>
+      <div class="meal-subtext">Al acabar de comer, con todas las opciones: 2 g Bisglicinato de magnesio</div>
       ${renderRandomOptionCards(comida4Options, numeroOpcionesPlan, seed, '4m_comida4')}
     </div>
   `
@@ -1080,21 +1065,25 @@ function buildHtml(data) {
       <style>
         @page {
           size: A4;
-          margin: 8mm;
+          margin: 6mm;
         }
 
         :root {
-          --bg-main: #edf3df;
-          --bg-soft: #f7f9f2;
+          --bg-soft: #f7faf8;
           --bg-card: #ffffff;
-          --band: #5b8087;
-          --circle: #5b8087;
-          --text: #18201c;
-          --text-soft: #50605a;
-          --line: #d7dfcf;
-          --line-soft: #e4eadb;
-          --accent: #3e6b56;
-          --accent-soft: #eff4ea;
+          --bg-muted: #f4f8f5;
+          --bg-tag: #eef8f1;
+          --line: #d9e7dd;
+          --line-strong: #c8dccf;
+          --text: #122018;
+          --text-soft: #566357;
+          --title: #0b1710;
+          --green: #1f9d55;
+          --green-dark: #177845;
+          --green-soft: #edf8f1;
+          --shadow-sm: 0 4px 10px rgba(12, 22, 16, 0.04);
+          --shadow-md: 0 10px 24px rgba(12, 22, 16, 0.06);
+          --shadow-lg: 0 18px 40px rgba(12, 22, 16, 0.08);
         }
 
         * {
@@ -1106,7 +1095,7 @@ function buildHtml(data) {
           padding: 0;
           font-family: Arial, sans-serif;
           color: var(--text);
-          background: var(--bg-main);
+          background: #ffffff;
           line-height: 1.25;
           font-size: 9px;
           -webkit-print-color-adjust: exact;
@@ -1114,209 +1103,230 @@ function buildHtml(data) {
         }
 
         body {
-          padding: 0;
-          background: var(--bg-main);
+          background: #ffffff;
         }
 
         .page {
           width: 100%;
-          background: var(--bg-main);
-          padding: 0;
+          background: #ffffff;
+          padding: 3px;
         }
 
         .cover {
-          min-height: 281mm;
-          background: var(--bg-main);
+          min-height: 284mm;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background:
+            radial-gradient(circle at top left, rgba(31,157,85,0.10) 0%, rgba(255,255,255,0) 30%),
+            radial-gradient(circle at bottom right, rgba(31,157,85,0.06) 0%, rgba(255,255,255,0) 28%),
+            linear-gradient(180deg, #f8fbf9 0%, #eef6f0 100%);
+          border: 1px solid var(--line);
+          border-radius: 24px;
+          padding: 10mm;
           page-break-after: always;
-          padding: 0 0 18mm;
         }
 
-        .cover-top-band {
-          height: 42mm;
-          background: var(--band);
+        .cover-shell {
           width: 100%;
-          margin-bottom: 18mm;
+          background: rgba(255,255,255,0.94);
+          border: 1px solid var(--line);
+          border-radius: 22px;
+          padding: 16px;
+          box-shadow: var(--shadow-lg);
         }
 
-        .cover-hero {
+        .cover-top-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          padding: 5px 11px;
+          border-radius: 999px;
+          background: var(--green-soft);
+          border: 1px solid var(--line);
+          color: var(--green-dark);
+          font-size: 8px;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          margin: 0 auto 12px;
+        }
+
+        .cover-top-dot {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: var(--green);
+          display: inline-block;
+        }
+
+        .cover-brand {
           text-align: center;
-          padding: 0 18mm;
-          margin-bottom: 16mm;
-        }
-
-        .cover-title {
-          font-size: 25px;
-          line-height: 1.15;
+          font-size: 39px;
           font-weight: 800;
-          color: #ffffff;
-          background: var(--band);
-          margin: -32mm auto 0;
-          padding: 18mm 12mm 10mm;
-          max-width: 170mm;
+          letter-spacing: 2.8px;
+          color: var(--title);
+          margin-bottom: 6px;
         }
 
-        .cover-subtitle {
-          font-size: 12px;
+        .cover-brand-line {
+          width: 110px;
+          height: 4px;
+          background: linear-gradient(90deg, #28b463 0%, #177845 100%);
+          border-radius: 999px;
+          margin: 0 auto 14px;
+        }
+
+        .cover-plan-name {
+          text-align: center;
+          font-size: 19px;
+          line-height: 1.1;
+          color: var(--title);
+          font-weight: 700;
+          margin-bottom: 7px;
+        }
+
+        .cover-description {
+          text-align: center;
+          font-size: 10.3px;
           color: var(--text-soft);
-          margin-top: 10px;
+          line-height: 1.38;
+          margin: 0 auto 12px;
+          max-width: 132mm;
         }
 
         .cover-profile-grid {
           display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 10px;
-          max-width: 160mm;
-          margin: 0 auto;
-          padding: 0 8mm;
+          grid-template-columns: 1fr 1fr 1fr;
+          gap: 8px;
         }
 
         .cover-profile-item {
-          background: rgba(255,255,255,0.55);
+          background: linear-gradient(180deg, #ffffff 0%, #fbfdfb 100%);
           border: 1px solid var(--line);
-          border-radius: 14px;
-          padding: 10px 12px;
-          min-height: 44px;
+          border-radius: 12px;
+          padding: 8px 8px;
+          min-height: 48px;
+          box-shadow: var(--shadow-sm);
         }
 
         .cover-profile-label {
-          font-size: 8px;
+          font-size: 7.2px;
           font-weight: 700;
           text-transform: uppercase;
-          color: var(--accent);
+          letter-spacing: 0.48px;
+          color: var(--green-dark);
           margin-bottom: 4px;
-          letter-spacing: 0.04em;
+          text-align: center;
         }
 
         .cover-profile-value {
-          font-size: 10px;
-          font-weight: 700;
+          font-size: 9px;
           color: var(--text);
+          font-weight: 700;
+          line-height: 1.18;
+          text-align: center;
         }
 
         .cover-summary {
-          max-width: 160mm;
-          margin: 12mm auto 0;
-          padding: 10px 12px;
-          border-top: 2px solid var(--band);
+          margin-top: 10px;
+          background: linear-gradient(180deg, #f7fbf8 0%, #f1f8f3 100%);
+          border: 1px solid var(--line);
+          border-radius: 12px;
+          padding: 8px 10px;
           color: var(--text-soft);
-          font-size: 10px;
-          line-height: 1.45;
+          text-align: center;
+          font-size: 9px;
+          line-height: 1.32;
         }
 
         .section-stack {
           display: grid;
           grid-template-columns: 1fr;
-          gap: 8px;
-          margin: 0 0 10px;
+          gap: 7px;
+          margin-bottom: 8px;
         }
 
         .card {
-          background: rgba(255,255,255,0.55);
+          background: linear-gradient(180deg, #ffffff 0%, #fbfdfb 100%);
           border: 1px solid var(--line);
           border-radius: 14px;
-          padding: 10px;
+          padding: 9px;
+          box-shadow: var(--shadow-sm);
         }
 
         .compact-card {
           margin-bottom: 0;
         }
 
-        .info-card {
-          background: rgba(255,255,255,0.52);
-        }
-
         .section-title {
-          font-size: 12px;
+          font-size: 11.5px;
           font-weight: 800;
-          margin: 0 0 8px;
-          color: var(--text);
-        }
-
-        .left-title {
-          text-align: left;
+          margin: 0 0 7px;
+          color: var(--title);
+          text-align: center;
+          letter-spacing: 0.2px;
         }
 
         .notes-list {
           display: flex;
           flex-direction: column;
-          gap: 6px;
+          gap: 5px;
         }
 
         .note-item {
           display: flex;
-          gap: 8px;
+          gap: 7px;
           align-items: flex-start;
-          background: rgba(255,255,255,0.7);
-          border: 1px solid var(--line-soft);
+          background: linear-gradient(180deg, #fbfdfb 0%, #f5f9f6 100%);
+          border: 1px solid var(--line);
           border-radius: 10px;
-          padding: 7px 8px;
+          padding: 6px 7px;
           font-size: 8.2px;
-          line-height: 1.22;
+          line-height: 1.18;
           color: var(--text-soft);
         }
 
         .note-dot {
-          width: 7px;
-          height: 7px;
-          min-width: 7px;
+          width: 6px;
+          height: 6px;
+          min-width: 6px;
           border-radius: 50%;
-          background: var(--circle);
+          background: var(--green);
           margin-top: 2px;
         }
 
         .meal-box {
-          background: transparent;
-          border: none;
-          border-radius: 0;
-          padding: 0;
-          margin: 0 0 16px;
+          background:
+            linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(249,252,250,1) 100%);
+          border: 1px solid var(--line);
+          border-radius: 18px;
+          padding: 10px;
+          margin-bottom: 8px;
           break-inside: avoid;
           page-break-inside: avoid;
-        }
-
-        .meal-head {
-          display: grid;
-          grid-template-columns: 24px 1fr;
-          gap: 12px;
-          align-items: start;
-          margin-bottom: 8px;
-        }
-
-        .meal-number {
-          width: 24px;
-          height: 24px;
-          min-width: 24px;
-          border-radius: 50%;
-          background: var(--circle);
-          color: #fff;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 11px;
-          font-weight: 800;
-          line-height: 1;
-          margin-top: 2px;
-        }
-
-        .meal-head-text {
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
+          box-shadow: var(--shadow-md);
         }
 
         .meal-title {
-          font-size: 15px;
+          font-size: 14px;
           font-weight: 800;
-          color: var(--text);
-          letter-spacing: 0.04em;
-          margin: 0;
+          color: var(--title);
+          margin-bottom: 8px;
+          text-align: center;
+          letter-spacing: 0.65px;
         }
 
         .meal-subtext {
-          font-size: 8px;
+          font-size: 7.9px;
           color: var(--text-soft);
-          line-height: 1.2;
-          margin: 0;
+          background: linear-gradient(180deg, #f9fcfa 0%, #f3f8f5 100%);
+          border: 1px solid var(--line);
+          border-radius: 8px;
+          padding: 4px 6px;
+          margin-bottom: 4px;
+          text-align: center;
+          line-height: 1.14;
         }
 
         .meal-options-grid,
@@ -1324,12 +1334,13 @@ function buildHtml(data) {
           display: grid;
           gap: 8px;
           align-items: stretch;
-          margin-left: 36px;
+          margin-top: 3px;
         }
 
         .options-count-1 {
           grid-template-columns: 1fr;
-          max-width: 75%;
+          max-width: 56%;
+          margin: 0 auto;
         }
 
         .options-count-2 {
@@ -1341,15 +1352,30 @@ function buildHtml(data) {
         }
 
         .option-card {
-          background: rgba(255,255,255,0.72);
+          position: relative;
+          background: linear-gradient(180deg, #ffffff 0%, #fafcfb 100%);
           border: 1px solid var(--line);
-          border-radius: 14px;
+          border-radius: 16px;
           padding: 0;
           break-inside: avoid;
           page-break-inside: avoid;
           height: 100%;
+          min-height: 100%;
+          text-align: center;
           display: flex;
+          box-shadow: var(--shadow-md);
           overflow: hidden;
+        }
+
+        .option-card::before {
+          content: "";
+          position: absolute;
+          top: 0;
+          left: 14px;
+          right: 14px;
+          height: 3px;
+          border-radius: 999px;
+          background: linear-gradient(90deg, #2ab866 0%, #1b7c48 100%);
         }
 
         .option-card-inner {
@@ -1357,14 +1383,14 @@ function buildHtml(data) {
           flex-direction: column;
           width: 100%;
           min-height: 100%;
-          padding: 10px 8px 8px;
+          padding: 10px 7px 7px;
         }
 
         .option-title-row {
           display: flex;
-          justify-content: flex-start;
+          justify-content: center;
           align-items: center;
-          min-height: 20px;
+          min-height: 28px;
           margin-bottom: 6px;
         }
 
@@ -1372,14 +1398,16 @@ function buildHtml(data) {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          color: var(--band);
-          font-size: 8.6px;
-          font-weight: 800;
+          background: linear-gradient(180deg, #2ab866 0%, #1b7c48 100%);
+          color: #fff;
+          border-radius: 999px;
+          padding: 4px 11px;
+          min-height: 22px;
+          font-size: 8.7px;
+          font-weight: 700;
           line-height: 1;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          border-bottom: 1px solid var(--line);
-          padding-bottom: 3px;
+          letter-spacing: 0.25px;
+          box-shadow: 0 6px 14px rgba(31, 157, 85, 0.18);
         }
 
         .option-lines {
@@ -1387,6 +1415,7 @@ function buildHtml(data) {
           flex-direction: column;
           gap: 4px;
           flex: 1;
+          justify-content: flex-start;
         }
 
         .food-line {
@@ -1405,72 +1434,76 @@ function buildHtml(data) {
         .food-pill {
           display: flex;
           width: 100%;
-          min-height: 30px;
-          background: #ffffff;
-          border: 1px solid var(--line-soft);
+          min-height: 29px;
+          background: linear-gradient(180deg, #ffffff 0%, #f6faf7 100%);
+          border: 1px solid var(--line);
           color: var(--text);
           border-radius: 10px;
           padding: 0;
-          text-align: left;
+          text-align: center;
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.75);
         }
 
         .food-pill-inner {
           display: flex;
           align-items: center;
-          justify-content: flex-start;
+          justify-content: center;
           width: 100%;
-          padding: 5px 7px;
-          font-size: 7.3px;
-          line-height: 1.15;
-          text-align: left;
+          padding: 4px 5px;
+          font-size: 7.45px;
+          line-height: 1.1;
+          text-align: center;
           font-weight: 600;
         }
 
         .choice-box-wrap {
           display: flex;
           flex-direction: column;
-          gap: 4px;
+          gap: 3px;
         }
 
         .choice-box-label {
           display: inline-flex;
           align-items: center;
-          justify-content: flex-start;
-          align-self: flex-start;
-          color: var(--accent);
-          padding: 0;
-          min-height: 14px;
-          font-size: 6.8px;
+          justify-content: center;
+          align-self: center;
+          background: var(--bg-tag);
+          border: 1px solid var(--line);
+          color: var(--green-dark);
+          border-radius: 999px;
+          padding: 2px 7px;
+          min-height: 16px;
+          font-size: 6.7px;
           font-weight: 700;
-          letter-spacing: 0.04em;
-          text-transform: uppercase;
+          letter-spacing: 0.15px;
         }
 
         .choice-box-grid {
           display: grid;
           grid-template-columns: 1fr;
-          gap: 4px;
+          gap: 3px;
         }
 
         .choice-box-item {
           display: flex;
           min-height: 23px;
-          background: #ffffff;
-          border: 1px solid var(--line-soft);
+          background: linear-gradient(180deg, #ffffff 0%, #f8fbf9 100%);
+          border: 1px solid var(--line);
           border-radius: 9px;
           padding: 0;
           color: var(--text-soft);
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
         }
 
         .choice-box-item-inner {
           display: flex;
           align-items: center;
-          justify-content: flex-start;
+          justify-content: center;
           width: 100%;
-          padding: 4px 6px;
-          font-size: 6.9px;
+          padding: 4px 5px;
+          font-size: 6.95px;
           line-height: 1.08;
-          text-align: left;
+          text-align: center;
           font-weight: 600;
         }
 
@@ -1482,36 +1515,39 @@ function buildHtml(data) {
           text-align: center;
           font-size: 8px;
           font-weight: 800;
-          color: var(--band);
+          color: var(--green);
           margin: 1px 0 0;
         }
 
         .options-count-1 .food-pill-inner {
           font-size: 7.8px;
+          line-height: 1.12;
         }
 
         .options-count-2 .food-pill-inner {
-          font-size: 7.25px;
+          font-size: 7.45px;
+          line-height: 1.08;
         }
 
         .options-count-2 .choice-box-item-inner {
-          font-size: 6.8px;
+          font-size: 6.85px;
+          line-height: 1.06;
         }
 
         .options-count-3 .option-card-inner {
-          padding: 8px 6px 6px;
+          padding: 9px 6px 6px;
         }
 
         .options-count-3 .food-pill-inner {
-          font-size: 6.55px;
+          font-size: 6.75px;
           line-height: 1.05;
-          padding: 4px 5px;
+          padding: 3px 4px;
         }
 
         .options-count-3 .choice-box-item-inner {
-          font-size: 6.1px;
+          font-size: 6.2px;
           line-height: 1.03;
-          padding: 4px 5px;
+          padding: 3px 4px;
         }
 
         .options-count-3 .option-lines {
@@ -1533,7 +1569,9 @@ function buildHtml(data) {
         }
 
         .options-count-3 .choice-box-label {
-          font-size: 6px;
+          min-height: 14px;
+          font-size: 6.2px;
+          padding: 1px 5px;
         }
 
         .footer-space {
@@ -1541,13 +1579,14 @@ function buildHtml(data) {
         }
 
         .internal-card {
-          background: rgba(255,255,255,0.6);
+          background: linear-gradient(180deg, #fbfdfb 0%, #f5f9f6 100%);
+          border: 1px solid var(--line-strong);
         }
 
         .internal-subtitle {
           font-size: 10px;
           font-weight: 800;
-          color: var(--text);
+          color: var(--title);
           margin: 8px 0 4px;
         }
 
@@ -1556,14 +1595,13 @@ function buildHtml(data) {
           border-collapse: collapse;
           margin-bottom: 6px;
           table-layout: fixed;
-          background: rgba(255,255,255,0.74);
         }
 
         .internal-table th,
         .internal-table td {
           border: 1px solid var(--line);
           padding: 4px 5px;
-          font-size: 7.3px;
+          font-size: 7.45px;
           line-height: 1.08;
           vertical-align: top;
           text-align: left;
@@ -1571,14 +1609,14 @@ function buildHtml(data) {
         }
 
         .internal-table th {
-          background: #eef2e6;
-          color: var(--text);
+          background: #f1f7f3;
+          color: var(--title);
           font-weight: 700;
         }
 
         .mono-cell {
           font-family: "Courier New", monospace;
-          font-size: 6.8px;
+          font-size: 6.9px;
         }
       </style>
     </head>
