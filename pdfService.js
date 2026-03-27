@@ -150,45 +150,47 @@ function createSeedFromLead(data) {
 }
 
 function calcularCaloriasObjetivo(data) {
-  const { sexo, edad, peso, altura, actividad, sueno, grasa } = data
+  const { sexo, edad, peso, altura, actividad, objetivo = 'perder' } = data
 
-  let bmr = 0
-
-  if (sexo === 'hombre') {
-    bmr = 10 * peso + 6.25 * altura - 5 * edad + 5
-  } else if (sexo === 'mujer') {
-    bmr = 10 * peso + 6.25 * altura - 5 * edad - 161
-  } else {
-    bmr = 10 * peso + 6.25 * altura - 5 * edad
-  }
+  let bmr = 10 * peso + 6.25 * altura - 5 * edad
+  if (sexo === 'hombre') bmr += 5
+  if (sexo === 'mujer') bmr -= 161
 
   const factoresActividad = {
     sedentario: 1.2,
-    ligero: 1.4,
+    ligero: 1.375,
     moderado: 1.55,
-    alto: 1.75,
+    alto: 1.725,
   }
 
-  const factoresGrasa = {
-    muy_tapado: 0.93,
-    normal: 0.97,
-    marcado: 1,
+  const mantenimiento = bmr * (factoresActividad[actividad] || 1.2)
+
+  let calorias = mantenimiento
+
+  if (objetivo === 'perder') {
+    if (sexo === 'mujer') {
+      if (mantenimiento < 1700) calorias = mantenimiento * 0.92
+      else if (mantenimiento < 2100) calorias = mantenimiento * 0.90
+      else calorias = mantenimiento * 0.88
+    } else {
+      if (mantenimiento < 2000) calorias = mantenimiento * 0.90
+      else calorias = mantenimiento * 0.88
+    }
   }
 
-  let calorias = bmr * factoresActividad[actividad]
-  calorias *= factoresGrasa[grasa]
+  if (objetivo === 'mantener') {
+    calorias = mantenimiento
+  }
 
-  if (sueno < 6) calorias *= 0.95
-  if (sueno > 8) calorias *= 1.02
+  if (objetivo === 'ganar') {
+    calorias = mantenimiento * 1.08
+  }
 
-  // Déficit del 10%
-  calorias *= 0.9
-
-  // Mínimo de seguridad
-  if (calorias < 1600) calorias = 1600
+  if (sexo === 'mujer' && calorias < 1350) calorias = 1350
+  if (sexo === 'hombre' && calorias < 1600) calorias = 1600
 
   return Math.round(calorias)
-}
+} haz distintos ejemplos de muejres
 
 function repartirCaloriasPorComida(caloriasObjetivo, mealsConfig) {
   return mealsConfig.map((meal) => {
