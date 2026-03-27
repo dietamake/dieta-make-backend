@@ -125,6 +125,37 @@ function normalizeDespertar(value) {
   return ''
 }
 
+function normalizeObjetivo(value) {
+  const v = String(value || '').trim().toLowerCase()
+
+  if (
+    v.includes('perd') ||
+    v.includes('defin') ||
+    v.includes('bajar') ||
+    v.includes('grasa')
+  ) {
+    return 'perder'
+  }
+
+  if (
+    v.includes('mant') ||
+    v.includes('recompos') ||
+    v.includes('mantener')
+  ) {
+    return 'mantener'
+  }
+
+  if (
+    v.includes('gan') ||
+    v.includes('volumen') ||
+    v.includes('subir')
+  ) {
+    return 'ganar'
+  }
+
+  return 'perder'
+}
+
 function getNumeroOpcionesPlan(plan) {
   const v = String(plan || '').trim().toLowerCase()
   if (v === 'avanzado_3_opciones') return 3
@@ -150,9 +181,19 @@ function createSeedFromLead(data) {
 }
 
 function calcularCaloriasObjetivo(data) {
-  const { sexo, edad, peso, altura, actividad, objetivo = 'perder' } = data
+  const sexo = normalizeSexo(data.sexo)
+  const edad = toNumber(data.edad, 0)
+  const peso = toNumber(data.peso, 0)
+  const altura = toNumber(data.altura, 0)
+  const actividad = normalizeActividad(data.actividad)
+  const objetivo = normalizeObjetivo(data.objetivo)
+
+  if (!sexo || !edad || !peso || !altura) {
+    throw new Error('Faltan datos válidos para calcular las calorías objetivo')
+  }
 
   let bmr = 10 * peso + 6.25 * altura - 5 * edad
+
   if (sexo === 'hombre') bmr += 5
   if (sexo === 'mujer') bmr -= 161
 
@@ -163,26 +204,23 @@ function calcularCaloriasObjetivo(data) {
     alto: 1.725,
   }
 
-  const mantenimiento = bmr * (factoresActividad[actividad] || 1.2)
+  const factorActividad = factoresActividad[actividad] || 1.2
+  const mantenimiento = bmr * factorActividad
 
   let calorias = mantenimiento
 
   if (objetivo === 'perder') {
     if (sexo === 'mujer') {
       if (mantenimiento < 1700) calorias = mantenimiento * 0.92
-      else if (mantenimiento < 2100) calorias = mantenimiento * 0.90
+      else if (mantenimiento < 2100) calorias = mantenimiento * 0.9
       else calorias = mantenimiento * 0.88
     } else {
-      if (mantenimiento < 2000) calorias = mantenimiento * 0.90
+      if (mantenimiento < 2000) calorias = mantenimiento * 0.9
       else calorias = mantenimiento * 0.88
     }
-  }
-
-  if (objetivo === 'mantener') {
+  } else if (objetivo === 'mantener') {
     calorias = mantenimiento
-  }
-
-  if (objetivo === 'ganar') {
+  } else if (objetivo === 'ganar') {
     calorias = mantenimiento * 1.08
   }
 
@@ -190,7 +228,7 @@ function calcularCaloriasObjetivo(data) {
   if (sexo === 'hombre' && calorias < 1600) calorias = 1600
 
   return Math.round(calorias)
-} haz distintos ejemplos de muejres
+}
 
 function repartirCaloriasPorComida(caloriasObjetivo, mealsConfig) {
   return mealsConfig.map((meal) => {
@@ -526,32 +564,33 @@ function traducirAjustesPersonalizados(data) {
   )
 
   return {
-  ultimaComidaTexto: ultimaComida.map((code) => {
-    const map = {
-      mas_dulce_noche:
-        'En la última comida te conviene meter un poco más de dulce fácil de digerir. Ejemplos: más miel, fruta o dátiles si esa opción los permite.',
-      mas_hidrato_noche:
-        'En la última comida te conviene meter un poco más de hidrato de digestión lenta. Ejemplos: más patata, boniato, arroz, calabaza o avena según la opción.',
-      mas_grasa_noche:
-        'En la última comida te conviene añadir un poco más de grasa. Ejemplos: aceite de coco, queso, aguacate o frutos secos (excepto nueces de macadamia).',
-    }
-    return map[code] || code
-  }),
+    ultimaComidaTexto: ultimaComida.map((code) => {
+      const map = {
+        mas_dulce_noche:
+          'En la última comida te conviene meter un poco más de dulce fácil de digerir. Ejemplos: más miel, fruta o dátiles si esa opción los permite.',
+        mas_hidrato_noche:
+          'En la última comida te conviene meter un poco más de hidrato de digestión lenta. Ejemplos: más patata, boniato, arroz, calabaza o avena según la opción.',
+        mas_grasa_noche:
+          'En la última comida te conviene añadir un poco más de grasa. Ejemplos: aceite de coco, queso, aguacate o frutos secos (excepto nueces de macadamia).',
+      }
+      return map[code] || code
+    }),
 
-  duranteDiaTexto: duranteDia.map((code) => {
-    const map = {
-      menos_proteina:
-        'Durante el día intenta no cargar demasiado las comidas de proteína.',
-      mas_calcio:
-        'Durante el día prioriza alimentos con calcio. Ejemplos: leche, yogur, queso fresco batido o queso.',
-      mas_fibra:
-        'Durante el día mete algo más de fibra usando solo verdura de fácil digestión.',
-      cafe_con_azucar:
-        '', // eliminado porque está prohibido
-    }
-    return map[code] || code
-  }).filter(Boolean), // elimina textos vacíos
-}
+    duranteDiaTexto: duranteDia
+      .map((code) => {
+        const map = {
+          menos_proteina:
+            'Durante el día intenta no cargar demasiado las comidas de proteína.',
+          mas_calcio:
+            'Durante el día prioriza alimentos con calcio. Ejemplos: leche, yogur, queso fresco batido o queso.',
+          mas_fibra:
+            'Durante el día mete algo más de fibra usando solo verdura de fácil digestión.',
+          cafe_con_azucar: '',
+        }
+        return map[code] || code
+      })
+      .filter(Boolean),
+  }
 }
 
 /* ========= GENERADOR DE PLAN ========= */
@@ -611,7 +650,7 @@ function generarPlanComidas(numeroComidas, caloriasObjetivo) {
 }
 
 function getDietPlan(data) {
-const comidasDia = Number(data.comidasDia) === 4 ? 4 : 3
+  const comidasDia = Number(data.comidasDia) === 4 ? 4 : 3
   const planGenerado = generarPlanComidas(comidasDia, data.caloriasObjetivo)
 
   return {
@@ -628,7 +667,7 @@ const comidasDia = Number(data.comidasDia) === 4 ? 4 : 3
 function normalizeLeadData(data) {
   return {
     ...data,
-    objetivo: formatObjetivo(data.objetivo),
+    objetivo: normalizeObjetivo(formatObjetivo(data.objetivo)),
     comidasDia: toNumber(data.comidasDia || data.comidas, 3),
     comidas: toNumber(data.comidas, 3),
     edad: toNumber(data.edad, 0),
@@ -712,6 +751,66 @@ async function generatePdfForLead(formId) {
   }
 }
 
+function getEjemplosMujeres() {
+  const ejemplos = [
+    {
+      nombre: 'Mujer 1 - Déficit suave',
+      sexo: 'mujer',
+      edad: 24,
+      peso: 58,
+      altura: 165,
+      actividad: 'ligero',
+      objetivo: 'perder',
+    },
+    {
+      nombre: 'Mujer 2 - Mantenimiento',
+      sexo: 'mujer',
+      edad: 31,
+      peso: 62,
+      altura: 168,
+      actividad: 'moderado',
+      objetivo: 'mantener',
+    },
+    {
+      nombre: 'Mujer 3 - Ganancia',
+      sexo: 'mujer',
+      edad: 27,
+      peso: 54,
+      altura: 160,
+      actividad: 'alto',
+      objetivo: 'ganar',
+    },
+    {
+      nombre: 'Mujer 4 - Muy activa, pérdida',
+      sexo: 'mujer',
+      edad: 29,
+      peso: 67,
+      altura: 170,
+      actividad: 'alto',
+      objetivo: 'perder',
+    },
+    {
+      nombre: 'Mujer 5 - Sedentaria, pérdida',
+      sexo: 'mujer',
+      edad: 38,
+      peso: 72,
+      altura: 163,
+      actividad: 'sedentario',
+      objetivo: 'perder',
+    },
+  ]
+
+  return ejemplos.map((ejemplo) => ({
+    ...ejemplo,
+    caloriasObjetivo: calcularCaloriasObjetivo(ejemplo),
+  }))
+}
+
 module.exports = {
   generatePdfForLead,
+  calcularCaloriasObjetivo,
+  normalizeLeadData,
+  normalizeObjetivo,
+  getDietPlan,
+  getEjemplosMujeres,
 }
