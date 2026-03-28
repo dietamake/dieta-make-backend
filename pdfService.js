@@ -94,11 +94,43 @@ function normalizeActividad(value) {
 function normalizeGrasa(value) {
   const v = String(value || '').trim().toLowerCase()
 
-  if (v.includes('muy') && v.includes('tap')) return 'muy_tapado'
-  if (v.includes('marcad')) return 'marcado'
-  if (v.includes('normal')) return 'normal'
+  if (
+    v.includes('1 dedo') ||
+    v.includes('1_dedo') ||
+    v.includes('un dedo') ||
+    v.includes('uno') ||
+    v.includes('menos')
+  ) {
+    return '1_dedo_o_menos'
+  }
 
-  return 'normal'
+  if (
+    v.includes('2-3') ||
+    v.includes('2–3') ||
+    v.includes('2 a 3') ||
+    v.includes('2 o 3') ||
+    v.includes('3 dedos o menos') ||
+    v.includes('2_3')
+  ) {
+    return '2_3_dedos'
+  }
+
+  if (
+    v.includes('más de 3') ||
+    v.includes('mas de 3') ||
+    v.includes('+3') ||
+    v.includes('3 o más') ||
+    v.includes('3 o mas')
+  ) {
+    return 'mas_de_3_dedos'
+  }
+
+  // compatibilidad con valores antiguos
+  if (v.includes('muy') && v.includes('tap')) return 'mas_de_3_dedos'
+  if (v.includes('normal')) return '2_3_dedos'
+  if (v.includes('marcad')) return '1_dedo_o_menos'
+
+  return '2_3_dedos'
 }
 
 function normalizeSueno(value) {
@@ -149,6 +181,27 @@ function createSeedFromLead(data) {
   return hash || 123456789
 }
 
+function estimarPorcentajeGrasa(sexo, grasa) {
+  if (sexo === 'hombre') {
+    if (grasa === '1_dedo_o_menos') return 11
+    if (grasa === '2_3_dedos') return 16
+    if (grasa === 'mas_de_3_dedos') return 20
+    return 16
+  }
+
+  if (sexo === 'mujer') {
+    if (grasa === '1_dedo_o_menos') return 20
+    if (grasa === '2_3_dedos') return 26
+    if (grasa === 'mas_de_3_dedos') return 32
+    return 26
+  }
+
+  if (grasa === '1_dedo_o_menos') return 15
+  if (grasa === '2_3_dedos') return 21
+  if (grasa === 'mas_de_3_dedos') return 26
+  return 21
+}
+
 function calcularCalorias({
   sexo,
   edad,
@@ -158,11 +211,7 @@ function calcularCalorias({
   grasa,
   sueno,
 }) {
-  let bmr = 0
-
-  if (sexo === 'hombre') bmr = 10 * peso + 6.25 * altura - 5 * edad + 5
-  else if (sexo === 'mujer') bmr = 10 * peso + 6.25 * altura - 5 * edad - 161
-  else bmr = 10 * peso + 6.25 * altura - 5 * edad
+  const alturaM = altura / 100
 
   const factoresActividad = {
     sedentario: 1.2,
@@ -171,21 +220,59 @@ function calcularCalorias({
     alto: 1.725,
   }
 
-  const factoresGrasa = {
-    muy_tapado: 0.96,
-    normal: 1,
-    marcado: 1.02,
+  const factorActividad = factoresActividad[actividad] || 1.2
+  const porcentajeGrasa = estimarPorcentajeGrasa(sexo, grasa)
+  const masaLibreGrasa = peso * (1 - porcentajeGrasa / 100)
+  const ffmi = alturaM > 0 ? masaLibreGrasa / (alturaM * alturaM) : 0
+
+  let bmr = 370 + 21.6 * masaLibreGrasa
+
+  if (edad >= 40) bmr *= 0.98
+  if (edad >= 50) bmr *= 0.97
+
+  let caloriasMantenimiento = bmr * factorActividad
+
+  if (sueno < 6) caloriasMantenimiento *= 0.97
+  else if (sueno > 8) caloriasMantenimiento *= 1.01
+
+  let factorDeficit = 1
+
+  if (sexo === 'hombre') {
+    if (porcentajeGrasa <= 12) factorDeficit = 0.97
+    else if (porcentajeGrasa <= 16) factorDeficit = 0.93
+    else if (porcentajeGrasa <= 20) factorDeficit = 0.89
+    else factorDeficit = 0.85
+  } else if (sexo === 'mujer') {
+    if (porcentajeGrasa <= 22) factorDeficit = 0.97
+    else if (porcentajeGrasa <= 28) factorDeficit = 0.93
+    else if (porcentajeGrasa <= 34) factorDeficit = 0.89
+    else factorDeficit = 0.85
+  } else {
+    if (porcentajeGrasa <= 18) factorDeficit = 0.93
+    else factorDeficit = 0.88
   }
 
-  let calorias = bmr * (factoresActividad[actividad] || 1.2)
-  calorias *= factoresGrasa[grasa] || 1
+  if (sexo === 'hombre') {
+    if (ffmi < 18) factorDeficit = Math.max(factorDeficit, 0.95)
+    else if (ffmi < 19.5) factorDeficit = Math.max(factorDeficit, 0.93)
+  } else if (sexo === 'mujer') {
+    if (ffmi < 14.5) factorDeficit = Math.max(factorDeficit, 0.95)
+    else if (ffmi < 15.5) factorDeficit = Math.max(factorDeficit, 0.93)
+  }
 
-  if (sueno < 6) calorias *= 0.97
-  else if (sueno > 8) calorias *= 1.01
+  const caloriasObjetivo = Math.round(caloriasMantenimiento * factorDeficit)
 
-  calorias *= 0.9
-
-  return Math.round(calorias)
+  return {
+    caloriasObjetivo,
+    bmr: Math.round(bmr),
+    caloriasMantenimiento: Math.round(caloriasMantenimiento),
+    masaLibreGrasa: Math.round(masaLibreGrasa * 10) / 10,
+    ffmi: Math.round(ffmi * 10) / 10,
+    porcentajeGrasa,
+    factorActividad,
+    factorDeficit,
+    grasa,
+  }
 }
 
 function repartirCaloriasPorComida(caloriasObjetivo, mealsConfig) {
@@ -659,16 +746,18 @@ async function generatePdfForLead(formId) {
 
   try {
     const normalizedData = normalizeLeadData(data)
-    const caloriasObjetivo = calcularCalorias(normalizedData)
+    const resultadoCalorias = calcularCalorias(normalizedData)
 
     const dietPlan = getDietPlan({
       ...normalizedData,
-      caloriasObjetivo,
+      ...resultadoCalorias,
+      caloriasObjetivo: resultadoCalorias.caloriasObjetivo,
     })
 
     const html = buildHtml({
       ...normalizedData,
-      caloriasObjetivo,
+      ...resultadoCalorias,
+      caloriasObjetivo: resultadoCalorias.caloriasObjetivo,
       ...dietPlan,
     })
 
