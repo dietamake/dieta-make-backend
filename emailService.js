@@ -55,6 +55,12 @@ async function sendDietEmail({ to, nombre, pdfUrl, plan }) {
         Este plan está diseñado para mejorar tu composición corporal, energía y adherencia sin complicarte.
       </p>
 
+      <div style="margin:20px 0; padding:14px; border:1px solid #111; border-radius:10px; background:#f8f8f8; text-align:center;">
+        <strong style="font-size:15px;">
+          IMPORTANTE: LEER TODAS LAS INDICACIONES Y RECOMENDACIONES
+        </strong>
+      </div>
+
       <div style="text-align:center; margin:30px 0;">
         <a href="${pdfUrl}" 
           style="display:inline-block;padding:14px 22px;background:#111;color:#fff;text-decoration:none;border-radius:10px;font-weight:bold;">
