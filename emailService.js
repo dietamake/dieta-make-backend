@@ -9,17 +9,17 @@ const PLANES = {
     label: 'Plan básico',
     opciones: 1,
   },
-  recomendado_5_opciones: {
+  recomendado_2_opciones: {
     amount: 1400,
     price: 14,
     label: 'Plan recomendado',
-    opciones: 5,
+    opciones: 2,
   },
-  avanzado_7_opciones: {
+  avanzado_3_opciones: {
     amount: 2400,
     price: 24,
     label: 'Plan avanzado',
-    opciones: 7,
+    opciones: 3,
   },
 }
 
