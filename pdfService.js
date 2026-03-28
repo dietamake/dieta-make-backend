@@ -125,7 +125,6 @@ function normalizeGrasa(value) {
     return 'mas_de_3_dedos'
   }
 
-  // compatibilidad con valores antiguos
   if (v.includes('muy') && v.includes('tap')) return 'mas_de_3_dedos'
   if (v.includes('normal')) return '2_3_dedos'
   if (v.includes('marcad')) return '1_dedo_o_menos'
@@ -612,7 +611,7 @@ function traducirAjustesPersonalizados(data) {
         mas_hidrato_noche:
           'En la última comida te conviene meter un poco más de hidrato de digestión lenta. Ejemplos: más patata, boniato, arroz, calabaza o avena según la opción.',
         mas_grasa_noche:
-          'En la última comida te conviene añadir un poco más de grasa. Ejemplos: aceite de coco, queso, aguacate o frutos secos (excepto nueces de macadamia).',
+          'En la última comida te conviene añadir un poco más de grasa. Ejemplos: aceite de coco, queso, aguacate o frutos secos.',
       }
       return map[code] || code
     }),
@@ -692,13 +691,30 @@ function getDietPlan(data) {
   const comidasDia = Number(data.comidasDia) === 4 ? 4 : 3
   const planGenerado = generarPlanComidas(comidasDia, data.caloriasObjetivo)
 
+  const instruccionesGenerales = [
+    'Lee todas las instrucciones antes de empezar y respeta las cantidades indicadas en cada comida y opción.',
+    'Comprar el suplemento de bisglicinato de magnesio es importante, aunque no imprescindible. Ayudará a conseguir resultados más rápido y lo encontraréis muy fácil en internet o en farmacias.',
+    'Se respetan los alimentos de cada opción y solo se ajustan las fuentes de hidratos para adaptar la dieta a las calorías calculadas.',
+  ]
+
+  const suplementacionComidas =
+    comidasDia === 3
+      ? {
+          comida1:
+            'Al acabar de comer, con todas las opciones: 1g de Bisglicinato de magnesio.',
+          comida2:
+            'Al acabar de comer, con todas las opciones: 1g de Bisglicinato de magnesio.',
+        }
+      : {}
+
   return {
     tituloPlan: 'Plan nutricional personalizado',
     ...planGenerado,
     numeroOpcionesPlan: data.numeroOpcionesPlan,
     comidasDia,
-    resumenPlan:
-      'Se respetan los alimentos de cada opción y solo se ajustan las fuentes de hidratos para adaptar la dieta a las calorías calculadas.',
+    textoNumeroComidas: `Este plan está organizado en ${comidasDia} comidas al día. Por favor, lee bien todas las instrucciones antes de empezar.`,
+    instruccionesGenerales,
+    suplementacionComidas,
     ajustesPersonalizados: traducirAjustesPersonalizados(data),
   }
 }
