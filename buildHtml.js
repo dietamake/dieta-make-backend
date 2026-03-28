@@ -253,6 +253,80 @@ function formatPrimeraComida(value) {
   return '-'
 }
 
+function formatPercent(value) {
+  if (value === null || value === undefined || value === '') return '-'
+  const num = Number(value)
+  if (Number.isNaN(num)) return String(value)
+  return `${num > 0 ? '+' : ''}${num}%`
+}
+
+function formatFactor(value) {
+  if (value === null || value === undefined || value === '') return '-'
+  const num = Number(value)
+  if (Number.isNaN(num)) return String(value)
+  return num.toFixed(2)
+}
+
+function renderCaloriasYAjustes(data) {
+  const calc = data.calculoCalorias || {}
+
+  const rows = [
+    ['Sexo', data.sexo || '-'],
+    ['Edad', data.edad ? `${data.edad} años` : '-'],
+    ['Altura', data.altura ? `${data.altura} cm` : '-'],
+    ['Peso', data.peso ? `${data.peso} kg` : '-'],
+    ['BMR estimado', calc.bmr ? `${calc.bmr} kcal` : '-'],
+    ['Actividad', calc.actividadLabel || data.actividad || '-'],
+    ['Factor actividad', formatFactor(calc.factorActividad)],
+    ['Grasa abdominal', calc.grasaAbdominalLabel || data.grasa_abdominal || '-'],
+    ['Factor grasa abdominal', formatFactor(calc.factorGrasaAbdominal)],
+    ['Sueño', calc.suenoLabel || data.sueno || '-'],
+    ['Ajuste sueño', formatPercent(calc.ajusteSuenoPct)],
+    ['Objetivo', formatObjetivo(data)],
+    ['Ajuste final', formatPercent(calc.ajusteFinalPct)],
+    [
+      'Calorías objetivo',
+      calc.caloriasObjetivo
+        ? `${calc.caloriasObjetivo} kcal`
+        : data.caloriasObjetivo
+          ? `${data.caloriasObjetivo} kcal`
+          : '-',
+    ],
+    ['Número de comidas', data.comidasDia || data.comidas || '-'],
+    ['Número de opciones plan', data.numeroOpcionesPlan || '-'],
+    ['Seed aleatoria', data.randomSeed || '-'],
+  ]
+
+  return `
+    <div class="card compact-card">
+      <div class="section-title">Cálculo de calorías y ajustes de la dieta</div>
+
+      <div class="calc-table-wrap">
+        <table class="calc-table">
+          <thead>
+            <tr>
+              <th>Concepto</th>
+              <th>Valor</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows
+              .map(
+                ([label, value]) => `
+                  <tr>
+                    <td>${escapeHtml(label)}</td>
+                    <td>${escapeHtml(value)}</td>
+                  </tr>
+                `
+              )
+              .join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `
+}
+
 function renderCover(data) {
   const objetivo = formatObjetivo(data)
   const nombre = data.nombre || 'Cliente'
@@ -1203,6 +1277,58 @@ function buildHtml(data) {
           margin-top: 2px;
         }
 
+        .calc-table-wrap {
+          width: 100%;
+          overflow: hidden;
+          border: 1px solid var(--line);
+          border-radius: 12px;
+          background: linear-gradient(180deg, #ffffff 0%, #fbfdfb 100%);
+          box-shadow: var(--shadow-sm);
+        }
+
+        .calc-table {
+          width: 100%;
+          border-collapse: collapse;
+          table-layout: fixed;
+        }
+
+        .calc-table thead th {
+          background: linear-gradient(180deg, #f1f8f3 0%, #eaf5ee 100%);
+          color: var(--green-dark);
+          font-size: 8px;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.35px;
+          padding: 8px 9px;
+          border-bottom: 1px solid var(--line);
+        }
+
+        .calc-table tbody td {
+          font-size: 8.2px;
+          color: var(--text);
+          padding: 7px 9px;
+          border-bottom: 1px solid var(--line);
+          vertical-align: top;
+          word-break: break-word;
+        }
+
+        .calc-table tbody tr:last-child td {
+          border-bottom: none;
+        }
+
+        .calc-table tbody td:first-child {
+          width: 42%;
+          font-weight: 700;
+          color: var(--title);
+          background: #fafcfb;
+        }
+
+        .calc-table tbody td:last-child {
+          width: 58%;
+          color: var(--text-soft);
+          font-weight: 600;
+        }
+
         .meal-box {
           background: linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(249,252,250,1) 100%);
           border: 1px solid var(--line);
@@ -1490,6 +1616,7 @@ function buildHtml(data) {
 
       <div class="page">
         <div class="section-stack">
+          ${renderCaloriasYAjustes(data)}
           ${renderIndicacionesGenerales(indicacionesGenerales)}
           ${renderNotas('Ajustes recomendados durante el día', ajustesPersonalizados.duranteDiaTexto)}
           ${renderNotas('Ajustes recomendados para la última comida', ajustesPersonalizados.ultimaComidaTexto)}
