@@ -244,7 +244,7 @@ function calcularCalorias({
   } else if (sexo === 'mujer') {
     if (porcentajeGrasa <= 22) factorDeficit = 0.97
     else if (porcentajeGrasa <= 28) factorDeficit = 0.93
-    else if (porcentajeGrasa <= 34) factorDeficit = 0.89
+    else if (porcentajeGrasa <= 34) factorDeficit = 0.91
     else factorDeficit = 0.85
   } else {
     if (porcentajeGrasa <= 18) factorDeficit = 0.93
